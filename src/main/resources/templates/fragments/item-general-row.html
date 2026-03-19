@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  Fragment: generalRow(item, rowNum)
+  Usage (inside a <tbody>):
+    <tr th:replace="~{fragments/item-general-row :: generalRow(${item}, ${iterStat.count})}"></tr>
+-->
+<tr th:fragment="generalRow(item, rowNum)">
+
+  <!-- Row number -->
+  <td class="text-muted small" th:text="${rowNum}">1</td>
+
+  <!-- Icon -->
+  <td>
+    <img th:src="@{/images/items/{id}.png(id=${item.itemId})}"
+         th:alt="${item.name}"
+         onerror="this.onerror=null;this.src='/images/items/0.png'"
+         width="32" height="32"
+         class="item-icon" />
+  </td>
+
+  <!-- Name -->
+  <td class="fw-semibold small" th:text="${item.name}">名稱</td>
+
+  <!-- Sub-category -->
+  <td class="text-muted small" th:text="${item.subCategory != null ? item.subCategory : '-'}">次分類</td>
+
+  <!-- Quantity -->
+  <td class="small" th:text="${item.quantity}">1</td>
+
+  <!-- Price -->
+  <td class="small fw-bold"
+      th:classappend="${item.priceType.name() == 'MESO' ? 'text-warning' :
+                       (item.priceType.name() == 'CS'   ? 'text-info'   : 'text-success')}">
+    <span th:text="${item.priceType.name()}"></span>
+    <span th:text="${#numbers.formatInteger(item.priceValue,0,'COMMA')}"></span>
+  </td>
+
+  <!-- Seller name -->
+  <td class="small" th:text="${item.sellerName}">賣家</td>
+
+  <!-- Location -->
+  <td class="small text-muted" th:text="${item.location}">CH1 FM01</td>
+
+  <!-- Copy button + fallback -->
+  <td>
+    <button type="button" class="btn btn-outline-secondary btn-sm copy-btn"
+            th:data-trade-code="${'【交易暗號】' + item.name + ' / ' +
+                                 #numbers.formatInteger(item.priceValue,0,'COMMA') + ' ' +
+                                 item.priceType.name() + ' / ' + item.location}">
+      複製暗號
+    </button>
+    <input type="text" class="form-control form-control-sm trade-fallback mt-1"
+           style="display:none; max-width:220px;"
+           readonly
+           th:value="${'【交易暗號】' + item.name + ' / ' +
+                       #numbers.formatInteger(item.priceValue,0,'COMMA') + ' ' +
+                       item.priceType.name() + ' / ' + item.location}" />
+  </td>
+
+</tr>
+
+</body>
+</html>

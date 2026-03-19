@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('管理後台')}"></head>
+<body class="bg-light">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0 fw-bold">管理後台 &mdash; 商品列表</h5>
+    <a th:href="@{/admin/items/new}" class="btn btn-primary btn-sm">+ 新增商品</a>
+  </div>
+
+  <!-- Flash message -->
+  <div th:if="${flashMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+    <span th:text="${flashMessage}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+
+  <!-- Summary -->
+  <div class="row g-2 mb-3">
+    <div class="col-auto">
+      <span class="badge bg-success fs-6">在庫 <span th:text="${inStockCount}"></span> 筆</span>
+    </div>
+    <div class="col-auto">
+      <span class="badge bg-secondary fs-6">售完 <span th:text="${soldOutCount}"></span> 筆</span>
+    </div>
+    <div class="col-auto" th:if="${soldOutCount > 0}">
+      <form th:action="@{/admin/items/soldout/delete}" method="post"
+            onsubmit="return confirm('確定要刪除所有售完商品嗎？')">
+        <button type="submit" class="btn btn-danger btn-sm">🗑️ 批量刪除售完商品</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Item table -->
+  <div class="table-responsive">
+    <table class="table table-sm table-hover table-bordered bg-white shadow-sm align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>圖示</th>
+          <th>名稱</th>
+          <th>大類</th>
+          <th>貨幣</th>
+          <th>標價</th>
+          <th>數量</th>
+          <th>賣家</th>
+          <th>位置</th>
+          <th>狀態</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="item : ${items}">
+          <td class="small text-muted" th:text="${item.id}"></td>
+          <td>
+            <img th:src="@{/images/items/{id}.png(id=${item.itemId})}"
+                 th:alt="${item.name}"
+                 onerror="this.onerror=null;this.style.display='none';this.insertAdjacentHTML('afterend','<span style=\'display:inline-block;width:32px;height:32px;background:#eee;border-radius:4px;\'></span>')"
+                 width="32" height="32" style="image-rendering:pixelated;" />
+          </td>
+          <td class="small fw-semibold" th:text="${item.name}"></td>
+          <td class="small" th:text="${item.category}"></td>
+          <td class="small"
+              th:classappend="${item.priceType.name() == 'MESO' ? 'text-warning fw-bold' :
+                               (item.priceType.name() == 'CS'   ? 'text-info fw-bold'   : 'text-success fw-bold')}"
+              th:text="${item.priceType}"></td>
+          <td class="small" th:text="${#numbers.formatInteger(item.priceValue,0,'COMMA')}"></td>
+          <td class="small" th:text="${item.quantity}"></td>
+          <td class="small" th:text="${item.sellerName}"></td>
+          <td class="small text-muted" th:text="${item.location}"></td>
+          <td>
+            <span th:if="${item.status.name() == 'IN_STOCK'}"  class="badge bg-success">在庫</span>
+            <span th:if="${item.status.name() == 'SOLD_OUT'}" class="badge bg-secondary">售完</span>
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a th:href="@{/admin/items/{id}/edit(id=${item.id})}"
+                 class="btn btn-outline-primary btn-sm">編輯</a>
+              <form th:if="${item.status.name() == 'IN_STOCK'}"
+                    th:action="@{/admin/items/{id}/soldout(id=${item.id})}" method="post">
+                <button type="submit" class="btn btn-outline-warning btn-sm">下架</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(items)}">
+          <td colspan="11" class="text-center text-muted py-3">尚無商品資料</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmydS3I+3s5HTMY2FGE8N4LhNm"
+        crossorigin="anonymous"></script>
+</body>
+</html>

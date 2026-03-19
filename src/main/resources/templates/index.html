@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('商品搜尋')}"></head>
+<body class="bg-light">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container-fluid py-3">
+  <div class="row g-3">
+
+    <!-- ===== Left: Filter Panel (20%) ===== -->
+    <div class="col-12 col-lg-2 col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6 class="fw-bold mb-3">搜尋與篩選</h6>
+        <form id="searchForm" th:action="@{/}" method="get">
+
+          <!-- Keyword -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">關鍵字</label>
+            <input type="text" class="form-control form-control-sm"
+                   name="keyword"
+                   th:value="${searchRequest.keyword}"
+                   placeholder="輸入商品名稱…" />
+          </div>
+
+          <!-- Category -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">大類</label>
+            <select id="categorySelect" class="form-select form-select-sm" name="category">
+              <option value="">-- 全部 --</option>
+              <option th:each="cat : ${categories}"
+                      th:value="${cat.name()}"
+                      th:text="${cat.name()}"
+                      th:selected="${searchRequest.category == cat.name()}">
+              </option>
+            </select>
+          </div>
+
+          <!-- Currency checkboxes -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">貨幣</label>
+            <div th:each="pt : ${ {'MESO','CS','WS'} }">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox"
+                       name="priceTypes" th:value="${pt}" th:id="${'pt-' + pt}"
+                       th:checked="${searchRequest.priceTypes == null
+                                    or searchRequest.priceTypes.isEmpty()
+                                    or #lists.contains(searchRequest.priceTypes, pt)}" />
+                <label class="form-check-label small" th:for="${'pt-' + pt}" th:text="${pt}"></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Equipment advanced filters (shown/hidden by JS) -->
+          <div id="equipmentFilters" class="mb-3" style="display:none;">
+            <label class="form-label small fw-semibold">裝備進階篩選</label>
+            <div class="row g-1">
+              <div class="col-6">
+                <input type="number" class="form-control form-control-sm" name="strMin"
+                       min="0" placeholder="STR ≥"
+                       th:value="${searchRequest.strMin}" />
+              </div>
+              <div class="col-6">
+                <input type="number" class="form-control form-control-sm" name="dexMin"
+                       min="0" placeholder="DEX ≥"
+                       th:value="${searchRequest.dexMin}" />
+              </div>
+              <div class="col-6">
+                <input type="number" class="form-control form-control-sm" name="intMin"
+                       min="0" placeholder="INT ≥"
+                       th:value="${searchRequest.intMin}" />
+              </div>
+              <div class="col-6">
+                <input type="number" class="form-control form-control-sm" name="lukMin"
+                       min="0" placeholder="LUK ≥"
+                       th:value="${searchRequest.lukMin}" />
+              </div>
+              <div class="col-6">
+                <input type="number" class="form-control form-control-sm" name="atkMin"
+                       min="0" placeholder="ATK ≥"
+                       th:value="${searchRequest.atkMin}" />
+              </div>
+              <div class="col-6">
+                <input type="number" class="form-control form-control-sm" name="matkMin"
+                       min="0" placeholder="MATK ≥"
+                       th:value="${searchRequest.matkMin}" />
+              </div>
+              <div class="col-12">
+                <input type="number" class="form-control form-control-sm" name="scrollSlotsMin"
+                       min="0" placeholder="卷次 ≥"
+                       th:value="${searchRequest.scrollSlotsMin}" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-category filter (shown/hidden by JS) -->
+          <div id="subCategoryFilter" class="mb-3" style="display:none;">
+            <label class="form-label small fw-semibold">次分類</label>
+            <select class="form-select form-select-sm" name="subCategory">
+              <option value="">-- 全部 --</option>
+              <option value="scroll"   th:selected="${searchRequest.subCategory == 'scroll'}">卷軸 (scroll)</option>
+              <option value="material" th:selected="${searchRequest.subCategory == 'material'}">材料 (material)</option>
+              <option value="ore"      th:selected="${searchRequest.subCategory == 'ore'}">礦石 (ore)</option>
+              <option value="other"    th:selected="${searchRequest.subCategory == 'other'}">其他</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm w-100">🔍 搜尋</button>
+        </form>
+      </div>
+    </div><!-- /col filter -->
+
+    <!-- ===== Right: Result Panel (80%) ===== -->
+    <div class="col-12 col-lg-10 col-md-9">
+
+      <!-- Result summary -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0 text-muted">
+          搜尋結果
+          <span class="badge bg-secondary" th:text="${totalCount}">0</span> 筆
+        </h6>
+      </div>
+
+      <!-- Empty state -->
+      <div th:unless="${hasResults}" class="alert alert-secondary text-center py-4">
+        <p class="mb-1 fs-5">😞 找不到符合條件的商品</p>
+        <p class="mb-0 small text-muted">請嘗試更改關鍵字或放寬篩選條件</p>
+      </div>
+
+      <!-- Results list -->
+      <div th:if="${hasResults}">
+
+        <!-- Equipment rows -->
+        <div th:each="item, iterStat : ${items}"
+             th:if="${item.category.name() == 'EQUIPMENT'}">
+          <div th:replace="~{fragments/item-equipment-row :: equipmentRow(${item})}"></div>
+        </div>
+
+        <!-- General item rows (table) -->
+        <div th:if="${#lists.size(items.?[category.name() != 'EQUIPMENT']) > 0}">
+          <table class="table table-sm table-hover table-bordered bg-white shadow-sm align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>#</th>
+                <th>圖示</th>
+                <th>名稱</th>
+                <th>次分類</th>
+                <th>數量</th>
+                <th>價格</th>
+                <th>賣家</th>
+                <th>位置</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <th:block th:each="item, iterStat : ${items}"
+                        th:if="${item.category.name() != 'EQUIPMENT'}">
+                <tr th:replace="~{fragments/item-general-row :: generalRow(${item}, ${iterStat.count})}"></tr>
+              </th:block>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /hasResults -->
+
+    </div><!-- /col result -->
+  </div><!-- /row -->
+</div><!-- /container -->
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmydS3I+3s5HTMY2FGE8N4LhNm"
+        crossorigin="anonymous"></script>
+
+<!-- Trade code copy -->
+<script th:src="@{/js/trade-code.js}"></script>
+
+<!-- Dynamic filter panel -->
+<script th:inline="javascript">
+(function () {
+  const catSelect       = document.getElementById('categorySelect');
+  const equipFilters    = document.getElementById('equipmentFilters');
+  const subCatFilter    = document.getElementById('subCategoryFilter');
+  const currentCategory = /*[[${searchRequest.category}]]*/ '';
+
+  function updateFilters(value) {
+    if (value === 'EQUIPMENT') {
+      equipFilters.style.display  = '';
+      subCatFilter.style.display  = 'none';
+    } else if (value && value !== '') {
+      equipFilters.style.display  = 'none';
+      subCatFilter.style.display  = '';
+    } else {
+      equipFilters.style.display  = 'none';
+      subCatFilter.style.display  = 'none';
+    }
+  }
+
+  // Restore state on page load after a search
+  updateFilters(currentCategory);
+
+  catSelect.addEventListener('change', function () {
+    updateFilters(this.value);
+  });
+})();
+</script>
+
+</body>
+</html>

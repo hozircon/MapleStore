@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  thymeleaf:
+    cache: false
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# Path to the extracted String.wz directory containing *.img.xml files.
+# ${user.dir} resolves to the project root when running via ./gradlew bootRun.
+app:
+  wz:
+    string-path: ${user.dir}/resource/String.wz
+    item-path: ${user.dir}/resource/Item.wz/Item.wz
+    char-path: ${user.dir}/resource/Character_0.wz/Character_0.wz

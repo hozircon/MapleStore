@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${isEdit} ? '編輯商品' : '新增商品')}"></head>
+<body class="bg-light">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container py-4" style="max-width: 720px;">
+
+  <div class="d-flex align-items-center mb-3 gap-2">
+    <a th:href="@{/admin}" class="btn btn-outline-secondary btn-sm">&larr; 返回後台</a>
+    <h5 class="mb-0 fw-bold" th:text="${isEdit} ? '編輯商品' : '新增商品'">新增商品</h5>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <form th:action="${isEdit} ? @{/admin/items/{id}(id=${itemId})} : @{/admin/items}"
+            th:object="${item}" method="post">
+
+        <div class="row g-3">
+
+          <!-- Game item search autocomplete -->
+          <div class="col-12">
+            <label class="form-label small fw-semibold">搜尋道具 <span class="text-danger">*</span></label>
+            <div class="position-relative">
+              <input type="text" id="itemSearchInput" class="form-control form-control-sm"
+                     placeholder="輸入道具名稱關鍵字，例：戒指、楓葉…" autocomplete="off" />
+              <div id="itemSearchDropdown"
+                   class="dropdown-menu w-100 shadow-sm p-0"
+                   style="display:none; max-height:240px; overflow-y:auto; position:absolute; z-index:1050;"></div>
+            </div>
+            <div class="form-text text-muted">從清單中選擇道具，將自動填入 ID 與名稱</div>
+          </div>
+
+          <!-- Hidden itemId (auto-filled by autocomplete) -->
+          <input type="hidden" id="itemIdHidden" th:field="*{itemId}" />
+          <div th:if="${#fields.hasErrors('itemId')}" class="col-12">
+            <div class="alert alert-danger py-1 px-2 small" th:errors="*{itemId}"></div>
+          </div>
+
+          <!-- Name (auto-filled, still editable) -->
+          <div class="col-12">
+            <label class="form-label small fw-semibold">商品名稱 <span class="text-danger">*</span>
+              <span class="text-muted fw-normal">（選取道具後自動填入，可手動補充說明）</span>
+            </label>
+            <input type="text" id="itemNameInput" class="form-control form-control-sm"
+                   th:field="*{name}" th:errorclass="is-invalid" maxlength="100"
+                   placeholder="選擇道具後自動填入" />
+            <div class="invalid-feedback" th:errors="*{name}"></div>
+          </div>
+
+          <!-- Category -->
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">大類 <span class="text-danger">*</span></label>
+            <select id="adminCategorySelect" class="form-select form-select-sm"
+                    th:field="*{category}" th:errorclass="is-invalid">
+              <option value="">-- 選擇大類 --</option>
+              <option th:each="cat : ${categories}"
+                      th:value="${cat.name()}"
+                      th:text="${cat.name()}"></option>
+            </select>
+            <div class="invalid-feedback" th:errors="*{category}"></div>
+          </div>
+
+          <!-- Sub-category (shown for non-equipment) -->
+          <div class="col-md-6" id="adminSubCatField">
+            <label class="form-label small fw-semibold">次分類</label>
+            <input type="text" class="form-control form-control-sm"
+                   th:field="*{subCategory}" placeholder="scroll / material / ore …" maxlength="50" />
+          </div>
+
+          <!-- Equipment stat block (shown for EQUIPMENT) -->
+          <div class="col-12" id="adminEquipStats" style="display:none;">
+            <label class="form-label small fw-semibold d-block">裝備數值（選填）</label>
+            <div class="row g-2">
+              <div class="col-4 col-md-2">
+                <input type="number" class="form-control form-control-sm"
+                       th:field="*{strBonus}" placeholder="STR" min="0" />
+              </div>
+              <div class="col-4 col-md-2">
+                <input type="number" class="form-control form-control-sm"
+                       th:field="*{dexBonus}" placeholder="DEX" min="0" />
+              </div>
+              <div class="col-4 col-md-2">
+                <input type="number" class="form-control form-control-sm"
+                       th:field="*{intBonus}" placeholder="INT" min="0" />
+              </div>
+              <div class="col-4 col-md-2">
+                <input type="number" class="form-control form-control-sm"
+                       th:field="*{lukBonus}" placeholder="LUK" min="0" />
+              </div>
+              <div class="col-4 col-md-2">
+                <input type="number" class="form-control form-control-sm"
+                       th:field="*{atkBonus}" placeholder="ATK" min="0" />
+              </div>
+              <div class="col-4 col-md-2">
+                <input type="number" class="form-control form-control-sm"
+                       th:field="*{matkBonus}" placeholder="MATK" min="0" />
+              </div>
+              <div class="col-4 col-md-3">
+                <input type="number" class="form-control form-control-sm"
+                       th:field="*{scrollSlotsRemaining}" placeholder="剩餘卷次" min="0" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Price type -->
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">貨幣類型 <span class="text-danger">*</span></label>
+            <select class="form-select form-select-sm"
+                    th:field="*{priceType}" th:errorclass="is-invalid">
+              <option value="">-- 選擇貨幣 --</option>
+              <option th:each="pt : ${priceTypes}"
+                      th:value="${pt.name()}"
+                      th:text="${pt.name()}"></option>
+            </select>
+            <div class="invalid-feedback" th:errors="*{priceType}"></div>
+          </div>
+
+          <!-- Price value -->
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">標價 <span class="text-danger">*</span></label>
+            <input type="number" class="form-control form-control-sm"
+                   th:field="*{priceValue}" th:errorclass="is-invalid" min="0" />
+            <div class="invalid-feedback" th:errors="*{priceValue}"></div>
+          </div>
+
+          <!-- Quantity -->
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">數量 <span class="text-danger">*</span></label>
+            <input type="number" class="form-control form-control-sm"
+                   th:field="*{quantity}" th:errorclass="is-invalid" min="1" value="1" />
+            <div class="invalid-feedback" th:errors="*{quantity}"></div>
+          </div>
+
+          <!-- Seller name -->
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">賣家角色名稱 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm"
+                   th:field="*{sellerName}" th:errorclass="is-invalid" maxlength="50" />
+            <div class="invalid-feedback" th:errors="*{sellerName}"></div>
+          </div>
+
+          <!-- Location -->
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">遊戲位置 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm"
+                   th:field="*{location}" th:errorclass="is-invalid"
+                   placeholder="例：CH1 FM03" maxlength="50" />
+            <div class="invalid-feedback" th:errors="*{location}"></div>
+          </div>
+
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary"
+                    th:text="${isEdit} ? '更新商品' : '新增商品'">新增商品</button>
+            <a th:href="@{/admin}" class="btn btn-outline-secondary ms-2">取消</a>
+          </div>
+
+        </div><!-- /row -->
+      </form>
+
+    </div>
+  </div>
+
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmydS3I+3s5HTMY2FGE8N4LhNm"
+        crossorigin="anonymous"></script>
+
+<script th:inline="javascript">
+(function () {
+  /* ── Category ↔ stat-fields sync ────────────────────────────── */
+  const catSel      = document.getElementById('adminCategorySelect');
+  const equipStats  = document.getElementById('adminEquipStats');
+  const subCatField = document.getElementById('adminSubCatField');
+  const currentCat  = /*[[${item.category}]]*/ '';
+
+  function syncFields(val) {
+    if (val === 'EQUIPMENT') {
+      equipStats.style.display  = '';
+      subCatField.style.display = 'none';
+    } else {
+      equipStats.style.display  = 'none';
+      subCatField.style.display = '';
+    }
+  }
+  syncFields(currentCat);
+  catSel.addEventListener('change', function () { syncFields(this.value); });
+
+  /* ── Game-item autocomplete ──────────────────────────────────── */
+  const searchInput = document.getElementById('itemSearchInput');
+  const dropdown    = document.getElementById('itemSearchDropdown');
+  const itemIdField = document.getElementById('itemIdHidden');
+  const nameField   = document.getElementById('itemNameInput');
+
+  // Edit mode: pre-populate search box with existing name
+  if (nameField.value) searchInput.value = nameField.value;
+
+  let debounce;
+  searchInput.addEventListener('input', function () {
+    clearTimeout(debounce);
+    const q = this.value.trim();
+    if (q.length < 1) { closeDropdown(); return; }
+    debounce = setTimeout(() => fetchItems(q), 250);
+  });
+
+  function fetchItems(q) {
+    fetch('/api/game-items?q=' + encodeURIComponent(q))
+      .then(function(r) { return r.json(); })
+      .then(function(items) {
+        dropdown.innerHTML = '';
+        if (!items.length) { closeDropdown(); return; }
+        items.forEach(function(item) {
+          const a = document.createElement('a');
+          a.className = 'dropdown-item small py-1';
+          a.href = '#';
+          a.innerHTML =
+            '<span style="font-size:.75em;color:#999;margin-right:.4em;">' + item.itemId + '</span>' +
+            '<strong>' + escapeHtml(item.name) + '</strong>' +
+            '<span class="badge bg-secondary ms-2" style="font-size:.65em;">' + item.wzCategory + '</span>';
+          a.addEventListener('mousedown', function(e) {
+            // mousedown fires before blur, so we can safely update values
+            e.preventDefault();
+            itemIdField.value = item.itemId;
+            nameField.value   = item.name;
+            searchInput.value = item.name;
+            closeDropdown();
+          });
+          dropdown.appendChild(a);
+        });
+        dropdown.style.display = 'block';
+      })
+      .catch(function() { closeDropdown(); });
+  }
+
+  function closeDropdown() { dropdown.style.display = 'none'; }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  searchInput.addEventListener('blur', function() {
+    // slight delay so mousedown on dropdown item fires first
+    setTimeout(closeDropdown, 150);
+  });
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDropdown();
+  });
+})();
+</script>
+
+</body>
+</html>

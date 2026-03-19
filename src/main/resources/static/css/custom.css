@@ -1,0 +1,54 @@
+/* =========================================================
+   MS 交易展示站 — 自訂樣式覆寫
+   ========================================================= */
+
+/* --- Layout: filter / result split --- */
+.filter-panel {
+  min-width: 160px;
+}
+
+.result-panel {
+  min-width: 0; /* prevents flexbox overflow */
+}
+
+/* --- Item icon --- */
+.item-icon {
+  object-fit: contain;
+  border-radius: 4px;
+  background: #f8f9fa;
+  padding: 2px;
+}
+
+/* --- Equipment row stat badges --- */
+.stat-badges .badge {
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.equipment-row:hover {
+  background-color: #f0f4ff;
+}
+
+/* --- Price colour helpers (complement Bootstrap text-*) --- */
+.price-meso { color: #e6a817; font-weight: 600; }
+.price-cs   { color: #0dcaf0; font-weight: 600; }
+.price-ws   { color: #198754; font-weight: 600; }
+
+/* --- Sold-out badge --- */
+.badge-sold-out {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+/* --- Flash message banner --- */
+.flash-banner {
+  position: sticky;
+  top: 56px;
+  z-index: 1020;
+}
+
+/* --- Trade-code fallback input --- */
+.trade-fallback {
+  font-family: monospace;
+  font-size: 0.78rem;
+}
