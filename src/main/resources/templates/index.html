@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('商品搜尋')}"></head>
-<body class="bg-light">
+<body>
 
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
@@ -10,27 +10,32 @@
 
     <!-- ===== Left: Filter Panel (20%) ===== -->
     <div class="col-12 col-lg-2 col-md-3">
-      <div class="card shadow-sm p-3">
-        <h6 class="fw-bold mb-3">搜尋與篩選</h6>
+      <div class="ms-filter-card p-3">
+        <h6 class="ms-panel-title">搜尋與篩選</h6>
         <form id="searchForm" th:action="@{/}" method="get">
 
           <!-- Keyword -->
           <div class="mb-3">
             <label class="form-label small fw-semibold">關鍵字</label>
-            <input type="text" class="form-control form-control-sm"
-                   name="keyword"
-                   th:value="${searchRequest.keyword}"
-                   placeholder="輸入商品名稱…" />
+            <div class="position-relative">
+              <input type="text" id="keywordInput" class="form-control form-control-sm"
+                     name="keyword" autocomplete="off"
+                     th:value="${searchRequest.keyword}"
+                     placeholder="輸入商品名稱…" />
+              <div id="keywordDropdown"
+                   class="dropdown-menu w-100 shadow-sm p-0"
+                   style="display:none; max-height:220px; overflow-y:auto; position:absolute; z-index:1050;"></div>
+            </div>
           </div>
 
           <!-- Category -->
           <div class="mb-3">
-            <label class="form-label small fw-semibold">大類</label>
+            <label class="form-label small fw-semibold">分類</label>
             <select id="categorySelect" class="form-select form-select-sm" name="category">
               <option value="">-- 全部 --</option>
               <option th:each="cat : ${categories}"
                       th:value="${cat.name()}"
-                      th:text="${cat.name()}"
+                      th:text="${cat.label}"
                       th:selected="${searchRequest.category == cat.name()}">
               </option>
             </select>
@@ -39,21 +44,50 @@
           <!-- Currency checkboxes -->
           <div class="mb-3">
             <label class="form-label small fw-semibold">貨幣</label>
-            <div th:each="pt : ${ {'MESO','CS','WS'} }">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox"
-                       name="priceTypes" th:value="${pt}" th:id="${'pt-' + pt}"
-                       th:checked="${searchRequest.priceTypes == null
-                                    or searchRequest.priceTypes.isEmpty()
-                                    or #lists.contains(searchRequest.priceTypes, pt)}" />
-                <label class="form-check-label small" th:for="${'pt-' + pt}" th:text="${pt}"></label>
-              </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="priceTypes" value="MESO" id="pt-MESO"
+                     th:checked="${searchRequest.priceTypes == null
+                                  or searchRequest.priceTypes.isEmpty()
+                                  or #lists.contains(searchRequest.priceTypes, 'MESO')}" />
+              <label class="form-check-label small" for="pt-MESO">楓幣</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="priceTypes" value="CS" id="pt-CS"
+                     th:checked="${searchRequest.priceTypes == null
+                                  or searchRequest.priceTypes.isEmpty()
+                                  or #lists.contains(searchRequest.priceTypes, 'CS')}" />
+              <label class="form-check-label small" for="pt-CS">CS</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="priceTypes" value="WS" id="pt-WS"
+                     th:checked="${searchRequest.priceTypes == null
+                                  or searchRequest.priceTypes.isEmpty()
+                                  or #lists.contains(searchRequest.priceTypes, 'WS')}" />
+              <label class="form-check-label small" for="pt-WS">WS</label>
             </div>
           </div>
 
           <!-- Equipment advanced filters (shown/hidden by JS) -->
           <div id="equipmentFilters" class="mb-3" style="display:none;">
             <label class="form-label small fw-semibold">裝備進階篩選</label>
+
+            <!-- 種類 select -->
+            <div class="mb-2">
+              <select id="equipTypeSelect" class="form-select form-select-sm" name="equipType">
+                <option value="">-- 種類：全部 --</option>
+                <option value="防具" th:selected="${searchRequest.equipType == '防具'}">防具</option>
+                <option value="武器" th:selected="${searchRequest.equipType == '武器'}">武器</option>
+                <option value="其他" th:selected="${searchRequest.equipType == '其他'}">其他（坐騎/寵物）</option>
+              </select>
+            </div>
+
+            <!-- 子分類 select（由 JS 動態填入） -->
+            <div class="mb-2">
+              <select id="equipSubTypeSelect" class="form-select form-select-sm" name="equipSubType">
+                <option value="">-- 子分類：全部 --</option>
+              </select>
+            </div>
+
             <div class="row g-1">
               <div class="col-6">
                 <input type="number" class="form-control form-control-sm" name="strMin"
@@ -93,25 +127,44 @@
             </div>
           </div>
 
-          <!-- Sub-category filter (shown/hidden by JS) -->
-          <div id="subCategoryFilter" class="mb-3" style="display:none;">
-            <label class="form-label small fw-semibold">次分類</label>
-            <select class="form-select form-select-sm" name="subCategory">
+          <!-- Sub-category filter: CONSUMABLE -->
+          <div id="subCatConsumable" class="mb-3" style="display:none;">
+            <label class="form-label small fw-semibold">子類別</label>
+            <select class="form-select form-select-sm" name="subCategory" id="subCatConsumableSelect">
               <option value="">-- 全部 --</option>
-              <option value="scroll"   th:selected="${searchRequest.subCategory == 'scroll'}">卷軸 (scroll)</option>
-              <option value="material" th:selected="${searchRequest.subCategory == 'material'}">材料 (material)</option>
-              <option value="ore"      th:selected="${searchRequest.subCategory == 'ore'}">礦石 (ore)</option>
-              <option value="other"    th:selected="${searchRequest.subCategory == 'other'}">其他</option>
+              <option value="藥水"     th:selected="${searchRequest.subCategory == '藥水'}">藥水</option>
+              <option value="卷軸"     th:selected="${searchRequest.subCategory == '卷軸'}">卷軸</option>
+              <option value="技能書"   th:selected="${searchRequest.subCategory == '技能書'}">技能書</option>
+              <option value="箭矢/飛鏢" th:selected="${searchRequest.subCategory == '箭矢/飛鏢'}">箭矢/飛鏢</option>
+              <option value="其他"     th:selected="${searchRequest.subCategory == '其他'}">其他</option>
             </select>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-sm w-100">🔍 搜尋</button>
+          <!-- Sub-category filter: OTHER -->
+          <div id="subCatOther" class="mb-3" style="display:none;">
+            <label class="form-label small fw-semibold">子類別</label>
+            <select class="form-select form-select-sm" name="subCategory" id="subCatOtherSelect">
+              <option value="">-- 全部 --</option>
+              <option value="礦石" th:selected="${searchRequest.subCategory == '礦石'}">礦石</option>
+              <option value="素材" th:selected="${searchRequest.subCategory == '素材'}">素材</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm w-100">搜尋</button>
         </form>
       </div>
     </div><!-- /col filter -->
 
     <!-- ===== Right: Result Panel (80%) ===== -->
     <div class="col-12 col-lg-10 col-md-9">
+
+      <!-- Not searched yet -->
+      <div th:unless="${searched}" class="ms-empty-hint text-center py-5 mt-2">
+        <p class="fs-5 mb-1" style="color:var(--ms-text-muted);">請輸入條件後點擊搜尋</p>
+        <p class="small mb-0">可依關鍵字、分類、貨幣或裝備屬性篩選商品</p>
+      </div>
+
+      <th:block th:if="${searched}">
 
       <!-- Result summary -->
       <div class="d-flex justify-content-between align-items-center mb-2">
@@ -130,25 +183,47 @@
       <!-- Results list -->
       <div th:if="${hasResults}">
 
-        <!-- Equipment rows -->
-        <div th:each="item, iterStat : ${items}"
-             th:if="${item.category.name() == 'EQUIPMENT'}">
-          <div th:replace="~{fragments/item-equipment-row :: equipmentRow(${item})}"></div>
+        <!-- Equipment table -->
+        <div th:if="${#lists.size(items.?[category.name() == 'EQUIPMENT']) > 0}">
+          <div style="overflow-x:auto;">
+          <table id="equipTable" class="table table-sm table-hover table-bordered ms-table align-middle mb-0">
+            <thead>
+              <tr style="height:40px;">
+                <th class="text-center sort-header" data-col="name" style="white-space:nowrap;min-width:160px;">道具名稱<span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="str" style="white-space:nowrap;">力量 <small class="text-muted fw-normal">STR</small><span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="dex" style="white-space:nowrap;">敏捷 <small class="text-muted fw-normal">DEX</small><span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="int" style="white-space:nowrap;">智力 <small class="text-muted fw-normal">INT</small><span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="luk" style="white-space:nowrap;">幸運 <small class="text-muted fw-normal">LUK</small><span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="atk" style="white-space:nowrap;">攻擊力 <small class="text-muted fw-normal">ATK</small><span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="matk" style="white-space:nowrap;">魔法攻擊 <small class="text-muted fw-normal">MATK</small><span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="slots" style="white-space:nowrap;">卷軸次數<span class="sort-ind"></span></th>
+                <th style="white-space:nowrap;min-width:100px;">其他素質</th>
+                <th class="text-center sort-header" data-col="price" style="white-space:nowrap;">價格<span class="sort-ind"></span></th>
+                <th class="text-center" style="white-space:nowrap;">賣家・位置</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <th:block th:each="item : ${items}" th:if="${item.category.name() == 'EQUIPMENT'}">
+                <tr th:replace="~{fragments/item-equipment-row :: equipmentRow(${item})}"></tr>
+              </th:block>
+            </tbody>
+          </table>
+          </div><!-- /overflow-x:auto -->
         </div>
 
         <!-- General item rows (table) -->
         <div th:if="${#lists.size(items.?[category.name() != 'EQUIPMENT']) > 0}">
-          <table class="table table-sm table-hover table-bordered bg-white shadow-sm align-middle">
-            <thead class="table-dark">
+          <div style="overflow-x:auto;">
+          <table id="generalTable" class="table table-sm table-hover table-bordered ms-table align-middle mb-0">
+            <thead>
               <tr>
-                <th>#</th>
-                <th>圖示</th>
-                <th>名稱</th>
-                <th>次分類</th>
-                <th>數量</th>
-                <th>價格</th>
-                <th>賣家</th>
-                <th>位置</th>
+                <th class="sort-header" data-col="name" data-table="generalTable" style="white-space:nowrap;min-width:160px;">道具名稱<span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="subcat" data-table="generalTable" style="white-space:nowrap;">子類別<span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="qty" data-table="generalTable" style="white-space:nowrap;">數量<span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="price" data-table="generalTable" style="white-space:nowrap;">價格<span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="seller" data-table="generalTable" style="white-space:nowrap;">賣家<span class="sort-ind"></span></th>
+                <th class="text-center sort-header" data-col="location" data-table="generalTable" style="white-space:nowrap;">位置<span class="sort-ind"></span></th>
                 <th></th>
               </tr>
             </thead>
@@ -159,9 +234,12 @@
               </th:block>
             </tbody>
           </table>
+          </div><!-- /overflow-x:auto -->
         </div>
 
       </div><!-- /hasResults -->
+
+      </th:block><!-- /searched -->
 
     </div><!-- /col result -->
   </div><!-- /row -->
@@ -177,32 +255,167 @@
 <!-- Trade code copy -->
 <script th:src="@{/js/trade-code.js}"></script>
 
+<!-- Equipment table column sort -->
+<script>
+(function () {
+  function initSort(tableId) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+
+    var currentCol = null;
+    var ascending  = true;
+
+    table.querySelectorAll('th.sort-header').forEach(function (th) {
+      th.style.cursor = 'pointer';
+      th.title = '點擊排序';
+      th.addEventListener('click', function () {
+        var col = this.dataset.col;
+        if (currentCol === col) {
+          ascending = !ascending;
+        } else {
+          currentCol = col;
+          ascending  = true;
+        }
+        table.querySelectorAll('.sort-ind').forEach(function (s) { s.textContent = '\u00a0'; });
+        this.querySelector('.sort-ind').textContent = ascending ? '▲' : '▼';
+        sortTable(table, col, ascending);
+      });
+    });
+  }
+
+  function sortTable(table, col, asc) {
+    var tbody = table.querySelector('tbody');
+    var rows  = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort(function (a, b) {
+      if (col === 'name' || col === 'subcat' || col === 'seller' || col === 'location') {
+        var r = (a.dataset[col] || '').localeCompare(b.dataset[col] || '', 'zh-TW');
+        return asc ? r : -r;
+      }
+      if (col === 'price') {
+        var ga = parseInt(a.dataset.priceGroup) || 0;
+        var gb = parseInt(b.dataset.priceGroup) || 0;
+        if (ga !== gb) return ga - gb;
+        var va = parseFloat(a.dataset.priceVal) || 0;
+        var vb = parseFloat(b.dataset.priceVal) || 0;
+        return asc ? va - vb : vb - va;
+      }
+      var av = parseFloat(a.dataset[col]) || 0;
+      var bv = parseFloat(b.dataset[col]) || 0;
+      return asc ? av - bv : bv - av;
+    });
+    rows.forEach(function (r) { tbody.appendChild(r); });
+  }
+
+  initSort('equipTable');
+  initSort('generalTable');
+})();
+</script>
+
+<!-- Keyword autocomplete -->
+<script>
+(function () {
+  const input    = document.getElementById('keywordInput');
+  const dropdown = document.getElementById('keywordDropdown');
+  if (!input || !dropdown) return;
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function close() { dropdown.style.display = 'none'; }
+
+  let timer;
+  input.addEventListener('input', function () {
+    clearTimeout(timer);
+    var q = this.value.trim();
+    if (q.length < 1) { close(); return; }
+    timer = setTimeout(function () {
+      fetch('/api/game-items?q=' + encodeURIComponent(q))
+        .then(function (r) { return r.json(); })
+        .then(function (items) {
+          dropdown.innerHTML = '';
+          if (!items.length) { close(); return; }
+          items.forEach(function (item) {
+            var a = document.createElement('a');
+            a.className = 'dropdown-item small py-1';
+            a.href = '#';
+            a.innerHTML = '<strong>' + escHtml(item.name) + '</strong>';
+            a.addEventListener('mousedown', function (e) {
+              e.preventDefault();
+              input.value = item.name;
+              close();
+            });
+            dropdown.appendChild(a);
+          });
+          dropdown.style.display = 'block';
+        })
+        .catch(close);
+    }, 200);
+  });
+
+  input.addEventListener('blur', function () { setTimeout(close, 150); });
+  input.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+})();
+</script>
+
 <!-- Dynamic filter panel -->
 <script th:inline="javascript">
 (function () {
-  const catSelect       = document.getElementById('categorySelect');
-  const equipFilters    = document.getElementById('equipmentFilters');
-  const subCatFilter    = document.getElementById('subCategoryFilter');
-  const currentCategory = /*[[${searchRequest.category}]]*/ '';
+  const catSelect        = document.getElementById('categorySelect');
+  const equipFilters     = document.getElementById('equipmentFilters');
+  const subCatConsumable = document.getElementById('subCatConsumable');
+  const subCatOther      = document.getElementById('subCatOther');
+  const currentCategory  = /*[[${searchRequest.category}]]*/ '';
+  const currentEquipType = /*[[${searchRequest.equipType}]]*/ '';
+  const currentEquipSubType = /*[[${searchRequest.equipSubType}]]*/ '';
+
+  const EQUIP_SUB = {
+    '防具': ['頭盔','帽子','上衣','套服','褲裙','手套','鞋子','披風','飾品'],
+    '武器': ['單手劍','雙手劍','單手斧','雙手斧','單手棍','雙手棍',
+             '短劍','指虎','拳套','矛','槍','弓','弩','火槍','短杖','長杖','盾牌'],
+    '其他': ['坐騎','寵物裝備']
+  };
+
+  function fillEquipSubType(equipType, selected) {
+    const subs = EQUIP_SUB[equipType] || [];
+    const sel  = document.getElementById('equipSubTypeSelect');
+    sel.innerHTML = '<option value="">-- 子分類：全部 --</option>'
+      + subs.map(s => `<option value="${s}"${s === selected ? ' selected' : ''}>${s}</option>`).join('');
+  }
+
+  function hideAllSubCat() {
+    subCatConsumable.style.display = 'none';
+    subCatOther.style.display      = 'none';
+    document.getElementById('subCatConsumableSelect').disabled = true;
+    document.getElementById('subCatOtherSelect').disabled      = true;
+  }
 
   function updateFilters(value) {
+    equipFilters.style.display = 'none';
+    hideAllSubCat();
     if (value === 'EQUIPMENT') {
-      equipFilters.style.display  = '';
-      subCatFilter.style.display  = 'none';
-    } else if (value && value !== '') {
-      equipFilters.style.display  = 'none';
-      subCatFilter.style.display  = '';
-    } else {
-      equipFilters.style.display  = 'none';
-      subCatFilter.style.display  = 'none';
+      equipFilters.style.display = '';
+    } else if (value === 'CONSUMABLE') {
+      subCatConsumable.style.display = '';
+      document.getElementById('subCatConsumableSelect').disabled = false;
+    } else if (value === 'OTHER') {
+      subCatOther.style.display = '';
+      document.getElementById('subCatOtherSelect').disabled = false;
     }
+    // DECORATIVE: 無子分類，不顯示任何選單
   }
 
   // Restore state on page load after a search
   updateFilters(currentCategory);
+  if (currentEquipType) {
+    fillEquipSubType(currentEquipType, currentEquipSubType);
+  }
 
   catSelect.addEventListener('change', function () {
     updateFilters(this.value);
+  });
+
+  document.getElementById('equipTypeSelect').addEventListener('change', function () {
+    fillEquipSubType(this.value, '');
   });
 })();
 </script>

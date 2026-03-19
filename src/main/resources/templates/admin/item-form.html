@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head(${isEdit} ? '編輯商品' : '新增商品')}"></head>
-<body class="bg-light">
+<body>
 
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
@@ -12,7 +12,7 @@
     <h5 class="mb-0 fw-bold" th:text="${isEdit} ? '編輯商品' : '新增商品'">新增商品</h5>
   </div>
 
-  <div class="card shadow-sm">
+  <div class="card">
     <div class="card-body">
 
       <form th:action="${isEdit} ? @{/admin/items/{id}(id=${itemId})} : @{/admin/items}"
@@ -23,12 +23,24 @@
           <!-- Game item search autocomplete -->
           <div class="col-12">
             <label class="form-label small fw-semibold">搜尋道具 <span class="text-danger">*</span></label>
-            <div class="position-relative">
-              <input type="text" id="itemSearchInput" class="form-control form-control-sm"
-                     placeholder="輸入道具名稱關鍵字，例：戒指、楓葉…" autocomplete="off" />
-              <div id="itemSearchDropdown"
-                   class="dropdown-menu w-100 shadow-sm p-0"
-                   style="display:none; max-height:240px; overflow-y:auto; position:absolute; z-index:1050;"></div>
+            <div class="d-flex align-items-start gap-2">
+              <div class="position-relative flex-grow-1">
+                <input type="text" id="itemSearchInput" class="form-control form-control-sm"
+                       placeholder="輸入道具名稱關鍵字，例：戒指、楓葉…" autocomplete="off" />
+                <div id="itemSearchDropdown"
+                     class="dropdown-menu w-100 shadow-sm p-0"
+                     style="display:none; max-height:240px; overflow-y:auto; position:absolute; z-index:1050;"></div>
+              </div>
+              <!-- Item icon preview -->
+              <div id="itemIconWrapper"
+                   style="width:48px;height:48px;flex-shrink:0;border:1px solid #dee2e6;border-radius:6px;
+                          background:#f8f9fa;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <img id="itemIconPreview"
+                     src="" alt=""
+                     style="display:none;width:40px;height:40px;image-rendering:pixelated;object-fit:contain;"
+                     onerror="this.style.display='none';document.getElementById('itemIconPlaceholder').style.display='';" />
+                <span id="itemIconPlaceholder" style="font-size:1.4rem;color:#ced4da;">🖼️</span>
+              </div>
             </div>
             <div class="form-text text-muted">從清單中選擇道具，將自動填入 ID 與名稱</div>
           </div>
@@ -58,20 +70,45 @@
               <option value="">-- 選擇大類 --</option>
               <option th:each="cat : ${categories}"
                       th:value="${cat.name()}"
-                      th:text="${cat.name()}"></option>
+                      th:text="${cat.label}"></option>
             </select>
             <div class="invalid-feedback" th:errors="*{category}"></div>
           </div>
 
           <!-- Sub-category (shown for non-equipment) -->
           <div class="col-md-6" id="adminSubCatField">
-            <label class="form-label small fw-semibold">次分類</label>
-            <input type="text" class="form-control form-control-sm"
-                   th:field="*{subCategory}" placeholder="scroll / material / ore …" maxlength="50" />
+            <label class="form-label small fw-semibold">子類別</label>
+            <select class="form-select form-select-sm" id="adminSubCatSelect"
+                    th:field="*{subCategory}">
+              <option value="">―― 選擇子類別 ――</option>
+              <!-- Options populated by JS based on selected category -->
+            </select>
           </div>
 
           <!-- Equipment stat block (shown for EQUIPMENT) -->
           <div class="col-12" id="adminEquipStats" style="display:none;">
+
+            <!-- 裝備種類 + 子分類 -->
+            <div class="row g-2 mb-2">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">種類</label>
+                <select id="adminEquipTypeSelect" class="form-select form-select-sm"
+                        th:field="*{equipType}">
+                  <option value="">-- 選擇種類 --</option>
+                  <option value="防具">防具</option>
+                  <option value="武器">武器</option>
+                  <option value="其他">其他（坐騎/寵物）</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">子分類</label>
+                <select id="adminEquipSubTypeSelect" class="form-select form-select-sm"
+                        th:field="*{equipSubType}">
+                  <option value="">-- 選擇子分類 --</option>
+                </select>
+              </div>
+            </div>
+
             <label class="form-label small fw-semibold d-block">裝備數值（選填）</label>
             <div class="row g-2">
               <div class="col-4 col-md-2">
@@ -102,6 +139,10 @@
                 <input type="number" class="form-control form-control-sm"
                        th:field="*{scrollSlotsRemaining}" placeholder="剩餘卷次" min="0" />
               </div>
+              <div class="col-12">
+                <input type="text" class="form-control form-control-sm"
+                       th:field="*{otherStats}" placeholder="其他素質，例：速度+10 HP+200" maxlength="200" />
+              </div>
             </div>
           </div>
 
@@ -113,7 +154,7 @@
               <option value="">-- 選擇貨幣 --</option>
               <option th:each="pt : ${priceTypes}"
                       th:value="${pt.name()}"
-                      th:text="${pt.name()}"></option>
+                      th:text="${pt.label}"></option>
             </select>
             <div class="invalid-feedback" th:errors="*{priceType}"></div>
           </div>
@@ -140,6 +181,15 @@
             <input type="text" class="form-control form-control-sm"
                    th:field="*{sellerName}" th:errorclass="is-invalid" maxlength="50" />
             <div class="invalid-feedback" th:errors="*{sellerName}"></div>
+          </div>
+
+          <!-- Warehouse char (admin only) -->
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">倉庫角色
+              <span class="text-muted fw-normal">(非必填，僅後台顯示)</span>
+            </label>
+            <input type="text" class="form-control form-control-sm"
+                   th:field="*{warehouseChar}" maxlength="30" placeholder="例：弓笭手01" />
           </div>
 
           <!-- Location -->
@@ -173,11 +223,44 @@
 
 <script th:inline="javascript">
 (function () {
+  /* ── Equip sub-type data ─────────────────────────────────────── */
+  const EQUIP_SUB = {
+    '防具': ['頭盔','帽子','上衣','套服','褲裙','手套','鞋子','披風','飾品'],
+    '武器': ['單手劍','雙手劍','單手斧','雙手斧','單手棍','雙手棍',
+             '短劍','指虎','拳套','矛','槍','弓','弩','火槍','短杖','長杖','盾牌'],
+    '其他': ['坐騎','寵物裝備']
+  };
+
+  const SUBCAT_OPTIONS = {
+    'CONSUMABLE': ['藥水', '卷軸', '技能書', '箭矢/飛鏢', '其他'],
+    'OTHER':      ['礦石', '素材'],
+    'DECORATIVE': []
+  };
+
+  function fillSubCatOptions(cat, selected) {
+    const opts = SUBCAT_OPTIONS[cat] || [];
+    const sel  = document.getElementById('adminSubCatSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">―― 選擇子類別 ――</option>'
+      + opts.map(o => `<option value="${o}"${o === selected ? ' selected' : ''}>${o}</option>`).join('');
+  }
+
+  function fillEquipSubType(equipType, selected) {
+    const subs = EQUIP_SUB[equipType] || [];
+    const sel  = document.getElementById('adminEquipSubTypeSelect');
+    sel.innerHTML = '<option value="">-- 選擇子分類 --</option>'
+      + subs.map(s => `<option value="${s}"${s === selected ? ' selected' : ''}>${s}</option>`).join('');
+  }
+
   /* ── Category ↔ stat-fields sync ────────────────────────────── */
-  const catSel      = document.getElementById('adminCategorySelect');
-  const equipStats  = document.getElementById('adminEquipStats');
-  const subCatField = document.getElementById('adminSubCatField');
-  const currentCat  = /*[[${item.category}]]*/ '';
+  const catSel         = document.getElementById('adminCategorySelect');
+  const equipStats     = document.getElementById('adminEquipStats');
+  const subCatField    = document.getElementById('adminSubCatField');
+  const currentCat     = /*[[${item.category}]]*/ '';
+  const currentEquipType    = /*[[${item.equipType}]]*/ '';
+  const currentEquipSubType = /*[[${item.equipSubType}]]*/ '';
+
+  const currentSubCat  = /*[[${item.subCategory}]]*/ '';
 
   function syncFields(val) {
     if (val === 'EQUIPMENT') {
@@ -186,19 +269,51 @@
     } else {
       equipStats.style.display  = 'none';
       subCatField.style.display = '';
+      fillSubCatOptions(val, currentSubCat);
     }
   }
   syncFields(currentCat);
+  // Restore equip sub-type options on edit
+  if (currentEquipType) {
+    fillEquipSubType(currentEquipType, currentEquipSubType);
+  }
   catSel.addEventListener('change', function () { syncFields(this.value); });
 
-  /* ── Game-item autocomplete ──────────────────────────────────── */
-  const searchInput = document.getElementById('itemSearchInput');
-  const dropdown    = document.getElementById('itemSearchDropdown');
-  const itemIdField = document.getElementById('itemIdHidden');
-  const nameField   = document.getElementById('itemNameInput');
+  document.getElementById('adminEquipTypeSelect').addEventListener('change', function () {
+    fillEquipSubType(this.value, '');
+  });
 
-  // Edit mode: pre-populate search box with existing name
-  if (nameField.value) searchInput.value = nameField.value;
+  /* ── Game-item autocomplete ──────────────────────────────────── */
+  const searchInput  = document.getElementById('itemSearchInput');
+  const dropdown     = document.getElementById('itemSearchDropdown');
+  const itemIdField  = document.getElementById('itemIdHidden');
+  const nameField    = document.getElementById('itemNameInput');
+  const iconPreview  = document.getElementById('itemIconPreview');
+  const iconPlaceholder = document.getElementById('itemIconPlaceholder');
+
+  function showItemIcon(itemId) {
+    if (!itemId) {
+      iconPreview.style.display = 'none';
+      iconPreview.src = '';
+      iconPlaceholder.style.display = '';
+      return;
+    }
+    iconPreview.onerror = function () {
+      this.style.display = 'none';
+      iconPlaceholder.style.display = '';
+    };
+    iconPreview.onload = function () {
+      this.style.display = '';
+      iconPlaceholder.style.display = 'none';
+    };
+    iconPreview.src = '/images/items/' + itemId + '.png';
+  }
+
+  // Edit mode: pre-populate search box and show icon for existing item
+  if (nameField.value) {
+    searchInput.value = nameField.value;
+    showItemIcon(itemIdField.value);
+  }
 
   let debounce;
   searchInput.addEventListener('input', function () {
@@ -228,6 +343,32 @@
             itemIdField.value = item.itemId;
             nameField.value   = item.name;
             searchInput.value = item.name;
+            // Auto-fill big category from wzCategory
+            const WZ_CAT_MAP = {
+              'Eqp':     'EQUIPMENT',
+              'Consume': 'CONSUMABLE',
+              'Etc':     'OTHER',
+              'Cash':    'DECORATIVE',
+              'Ins':     'OTHER',
+              'Pet':     'OTHER'
+            };
+            const mappedCat = WZ_CAT_MAP[item.wzCategory] || '';
+            catSel.value = mappedCat;
+            syncFields(mappedCat);
+            // Auto-fill equip type / sub-type if GameItem has them
+            if (item.equipType) {
+              const equipTypeSel = document.getElementById('adminEquipTypeSelect');
+              equipTypeSel.value = item.equipType;
+              fillEquipSubType(item.equipType, item.equipSubType || '');
+              const equipSubTypeSel = document.getElementById('adminEquipSubTypeSelect');
+              if (item.equipSubType) equipSubTypeSel.value = item.equipSubType;
+            }
+            showItemIcon(item.itemId);
+            // Auto-fill sub-category for non-equipment items
+            if (item.subCategory) {
+              const subSel = document.getElementById('adminSubCatSelect');
+              if (subSel) subSel.value = item.subCategory;
+            }
             closeDropdown();
           });
           dropdown.appendChild(a);

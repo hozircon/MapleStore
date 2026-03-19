@@ -60,6 +60,18 @@ public class Item {
     @Column(name = "scroll_slots_remaining")
     private Integer scrollSlotsRemaining;
 
+    /** 裝備種類：防具 / 武器 / 其他（非裝備類為 null） */
+    @Column(name = "equip_type", length = 10)
+    private String equipType;
+
+    /** 裝備子分類：頭盔 / 單手劍 …（非裝備類為 null） */
+    @Column(name = "equip_sub_type", length = 20)
+    private String equipSubType;
+
+    /** 其他詰質：自由文字，例：速度+10 HP+200 */
+    @Column(name = "other_stats", length = 200)
+    private String otherStats;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "price_type", nullable = false, length = 10)
     private PriceType priceType;
@@ -75,6 +87,10 @@ public class Item {
 
     @Column(name = "seller_name", nullable = false, length = 50)
     private String sellerName;
+
+    /** 倉庫角色：僅後台顯示，記錄道具放在哪支角色身上 */
+    @Column(name = "warehouse_char", length = 30)
+    private String warehouseChar;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

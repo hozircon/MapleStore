@@ -25,11 +25,13 @@ public class ItemDto {
     private Integer atkBonus;
     private Integer matkBonus;
     private Integer scrollSlotsRemaining;
+    private String otherStats;
     private PriceType priceType;
     private Long priceValue;
     private Integer quantity;
     private String location;
     private String sellerName;
+    private String warehouseChar;
     private ItemStatus status;
 
     public static ItemDto from(Item item) {
@@ -46,11 +48,13 @@ public class ItemDto {
         dto.atkBonus              = item.getAtkBonus();
         dto.matkBonus             = item.getMatkBonus();
         dto.scrollSlotsRemaining  = item.getScrollSlotsRemaining();
+        dto.otherStats            = item.getOtherStats();
         dto.priceType             = item.getPriceType();
         dto.priceValue            = item.getPriceValue();
         dto.quantity              = item.getQuantity();
         dto.location              = item.getLocation();
         dto.sellerName            = item.getSellerName();
+        dto.warehouseChar         = item.getWarehouseChar();
         dto.status                = item.getStatus();
         return dto;
     }

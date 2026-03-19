@@ -70,6 +70,14 @@ public class SearchService {
 
         // Equipment stat threshold filters (AND logic, only when category = EQUIPMENT)
         if (cat == Category.EQUIPMENT) {
+            if (req.getEquipType() != null && !req.getEquipType().isBlank()) {
+                jpql.append(" AND i.equipType = :equipType");
+                params.put("equipType", req.getEquipType());
+            }
+            if (req.getEquipSubType() != null && !req.getEquipSubType().isBlank()) {
+                jpql.append(" AND i.equipSubType = :equipSubType");
+                params.put("equipSubType", req.getEquipSubType());
+            }
             if (req.getStrMin() != null) {
                 jpql.append(" AND i.strBonus >= :strMin");
                 params.put("strMin", req.getStrMin());

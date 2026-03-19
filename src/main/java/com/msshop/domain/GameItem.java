@@ -33,6 +33,18 @@ public class GameItem implements Persistable<Integer> {
     @Column(name = "wz_category", length = 30)
     private String wzCategory;
 
+    /** 裝備種類：防具 / 武器 / 其他（非裝備類為 null） */
+    @Column(name = "equip_type", length = 10)
+    private String equipType;
+
+    /** 裝備子分類：頭盔 / 單手劍 …（非裝備類為 null） */
+    @Column(name = "equip_sub_type", length = 20)
+    private String equipSubType;
+
+    /** 一般道具子類別：藥水 / 卷軸 / 礦石 …（裝備類為 null） */
+    @Column(name = "sub_category", length = 50)
+    private String subCategory;
+
     /**
      * Tracks whether this instance is brand-new (not yet persisted).
      * Marked {@code @Transient} so it is never stored in the database.
@@ -52,6 +64,19 @@ public class GameItem implements Persistable<Integer> {
         this.name = name;
         this.wzCategory = wzCategory;
         this.isNew = true;
+    }
+
+    public GameItem(Integer itemId, String name, String wzCategory,
+                    String equipType, String equipSubType) {
+        this(itemId, name, wzCategory);
+        this.equipType    = equipType;
+        this.equipSubType = equipSubType;
+    }
+
+    public GameItem(Integer itemId, String name, String wzCategory, String subCategory,
+                    boolean isSubCat) {
+        this(itemId, name, wzCategory);
+        this.subCategory = subCategory;
     }
 
     @Override

@@ -74,6 +74,8 @@ public class ItemService {
         item.setName(req.getName());
         item.setCategory(Category.valueOf(req.getCategory()));
         item.setSubCategory(req.getSubCategory());
+        item.setEquipType(req.getEquipType());
+        item.setEquipSubType(req.getEquipSubType());
         item.setStrBonus(req.getStrBonus());
         item.setDexBonus(req.getDexBonus());
         item.setIntBonus(req.getIntBonus());
@@ -81,11 +83,13 @@ public class ItemService {
         item.setAtkBonus(req.getAtkBonus());
         item.setMatkBonus(req.getMatkBonus());
         item.setScrollSlotsRemaining(req.getScrollSlotsRemaining());
+        item.setOtherStats(req.getOtherStats());
         item.setPriceType(PriceType.valueOf(req.getPriceType()));
         item.setPriceValue(req.getPriceValue());
         item.setQuantity(req.getQuantity());
         item.setLocation(req.getLocation());
         item.setSellerName(req.getSellerName());
+        item.setWarehouseChar(req.getWarehouseChar());
         return item;
     }
 }

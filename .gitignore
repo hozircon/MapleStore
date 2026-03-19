@@ -29,3 +29,35 @@ Thumbs.db
 
 # Spring Boot
 HELP.md
+
+# Gradle wrapper jar — 留在版控
+!gradle/wrapper/gradle-wrapper.jar
+
+# ══════════════════════════════════════════════════════════════
+#  遊戲拆檔資源 (resource/)
+#  保留：程式實際讀取的 xml / xlsx
+#  排除：所有圖片目錄、zip 備份、未使用 xml、Excel 暫存鎖定檔
+# ══════════════════════════════════════════════════════════════
+
+# 圖片目錄（Character_0.wz 和 Item.wz 全是 PNG，完全排除）
+resource/Character_0.wz/
+resource/Item.wz/
+
+# String.wz zip 壓縮包（不需入版控）
+resource/String.wz.zip
+
+# Excel 暫存鎖定檔（~$ 開頭，Office 開啟中產生）
+resource/String.wz/~$*.xlsx
+
+# String.wz 中目前程式碼未使用的 xml
+# 若未來有需要，移除對應行即可重新加入版控
+resource/String.wz/EULA.img.xml
+resource/String.wz/Map.img.xml
+resource/String.wz/Mob.img.xml
+resource/String.wz/MonsterBook.img.xml
+resource/String.wz/NameChange.img.xml
+resource/String.wz/Npc.img.xml
+resource/String.wz/PetDialog.img.xml
+resource/String.wz/Skill.img.xml
+resource/String.wz/ToolTipHelp.img.xml
+resource/String.wz/TransferWorld.img.xml

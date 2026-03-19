@@ -1,54 +1,236 @@
 /* =========================================================
-   MS 交易展示站 — 自訂樣式覆寫
+   MS 交易展示站 — 日系簡潔・淺色系 UI
    ========================================================= */
 
-/* --- Layout: filter / result split --- */
-.filter-panel {
-  min-width: 160px;
+/* ── 色彩變數 ─────────────────────────────────────────────── */
+:root {
+  --ms-bg-page:        #F7F4EE;
+  --ms-bg-card:        #FDFCF8;
+  --ms-bg-panel:       #F0EDE5;
+  --ms-blue-nav:       #4A8FAB;
+  --ms-blue-nav-dark:  #3A7490;
+  --ms-blue-light:     #D9EEF5;
+  --ms-blue-mid:       #78B8D0;
+  --ms-blue-btn:       #3A7D96;
+  --ms-blue-btn-hov:   #2E6578;
+  --ms-text-primary:   #2D2D2D;
+  --ms-text-muted:     #7A7268;
+  --ms-text-on-blue:   #FFFFFF;
+  --ms-border:         #DDD8CF;
+  --ms-meso:           #B07D2E;
+  --ms-cs:             #2A7FC1;
+  --ms-ws:             #3A9068;
+  --ms-radius:         6px;
 }
 
-.result-panel {
-  min-width: 0; /* prevents flexbox overflow */
+/* ── 全域 reset ──────────────────────────────────────────── */
+body {
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  background-color: var(--ms-bg-page) !important;
+  color: var(--ms-text-primary);
+  font-size: 0.9rem;
 }
 
-/* --- Item icon --- */
-.item-icon {
-  object-fit: contain;
-  border-radius: 4px;
-  background: #f8f9fa;
-  padding: 2px;
+h5, h6 { font-weight: 500; color: var(--ms-text-primary); }
+
+/* ── 導覽列 ──────────────────────────────────────────────── */
+.ms-navbar {
+  background-color: var(--ms-blue-nav);
+  padding: 0.5rem 1rem;
 }
-
-/* --- Equipment row stat badges --- */
-.stat-badges .badge {
-  font-size: 0.72rem;
-  white-space: nowrap;
+.ms-navbar .navbar-brand {
+  color: var(--ms-text-on-blue);
+  font-weight: 500;
+  letter-spacing: .04em;
+  font-size: 1rem;
 }
-
-.equipment-row:hover {
-  background-color: #f0f4ff;
+.ms-navbar .navbar-brand:hover { color: #e8f5fa; }
+.ms-navbar .btn-nav-admin {
+  color: var(--ms-text-on-blue);
+  border: 1px solid rgba(255,255,255,.55);
+  border-radius: var(--ms-radius);
+  font-size: .8rem;
+  padding: .25rem .7rem;
+  transition: background .15s;
 }
-
-/* --- Price colour helpers (complement Bootstrap text-*) --- */
-.price-meso { color: #e6a817; font-weight: 600; }
-.price-cs   { color: #0dcaf0; font-weight: 600; }
-.price-ws   { color: #198754; font-weight: 600; }
-
-/* --- Sold-out badge --- */
-.badge-sold-out {
-  background-color: #6c757d;
+.ms-navbar .btn-nav-admin:hover {
+  background: rgba(255,255,255,.15);
   color: #fff;
 }
 
-/* --- Flash message banner --- */
+/* ── 篩選側欄 card ────────────────────────────────────────── */
+.filter-panel { min-width: 160px; }
+.result-panel  { min-width: 0; }
+
+.ms-filter-card {
+  background: var(--ms-bg-panel);
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-radius);
+}
+.ms-filter-card .ms-panel-title {
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--ms-text-muted);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--ms-border);
+  padding-bottom: .4rem;
+  margin-bottom: .75rem;
+}
+
+/* ── 表單控制項 ───────────────────────────────────────────── */
+.form-control, .form-select {
+  border-color: var(--ms-border);
+  border-radius: var(--ms-radius);
+  background-color: var(--ms-bg-card);
+  color: var(--ms-text-primary);
+  font-size: .82rem;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--ms-blue-mid);
+  box-shadow: 0 0 0 .2rem rgba(120,184,208,.25);
+  background-color: #fff;
+}
+.form-label { color: var(--ms-text-muted); font-size: .78rem; margin-bottom: .2rem; }
+.form-check-input:checked {
+  background-color: var(--ms-blue-btn);
+  border-color: var(--ms-blue-btn);
+}
+
+/* ── 按鈕 ─────────────────────────────────────────────────── */
+.btn-primary, .btn-ms-primary {
+  background-color: var(--ms-blue-btn) !important;
+  border-color: var(--ms-blue-btn) !important;
+  color: #fff !important;
+  border-radius: var(--ms-radius);
+  font-size: .82rem;
+}
+.btn-primary:hover, .btn-ms-primary:hover {
+  background-color: var(--ms-blue-btn-hov) !important;
+  border-color: var(--ms-blue-btn-hov) !important;
+}
+.btn-outline-secondary {
+  border-color: var(--ms-border) !important;
+  color: var(--ms-text-muted) !important;
+  border-radius: var(--ms-radius);
+  font-size: .78rem;
+}
+.btn-outline-secondary:hover {
+  background: var(--ms-bg-panel) !important;
+  color: var(--ms-text-primary) !important;
+}
+
+/* ── 一般卡片 ─────────────────────────────────────────────── */
+.card {
+  background-color: var(--ms-bg-card);
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-radius);
+}
+.card.shadow-sm { box-shadow: 0 1px 4px rgba(0,0,0,.07) !important; }
+
+/* ── 搜尋結果表格 ─────────────────────────────────────────── */
+.ms-table {
+  background-color: var(--ms-bg-card);
+  border-color: var(--ms-border);
+  font-size: .82rem;
+}
+.ms-table > thead {
+  background-color: var(--ms-blue-light);
+  color: var(--ms-text-primary);
+  border-bottom: 2px solid var(--ms-blue-mid);
+}
+.ms-table > thead th {
+  font-weight: 500;
+  font-size: .78rem;
+  letter-spacing: .02em;
+  border-color: var(--ms-border);
+  vertical-align: middle;
+  padding: .45rem .5rem;
+  white-space: nowrap;
+}
+.ms-table > tbody > tr { border-color: var(--ms-border); }
+.ms-table > tbody > tr:hover { background-color: #EEF6FA; }
+.ms-table th.sort-header:hover { text-decoration: underline dotted; cursor: pointer; }
+
+/* Sort indicator */
+.sort-ind {
+  display: inline-block;
+  width: 1em;
+  text-align: center;
+  color: var(--ms-blue-btn);
+}
+
+/* ── 統計徽章（後台） ─────────────────────────────────────── */
+.ms-badge-instock {
+  display: inline-block;
+  padding: .3rem .75rem;
+  border-left: 3px solid #3A9068;
+  background: #f0faf4;
+  color: #2a6b4a;
+  border-radius: 0 var(--ms-radius) var(--ms-radius) 0;
+  font-size: .82rem;
+}
+.ms-badge-soldout {
+  display: inline-block;
+  padding: .3rem .75rem;
+  border-left: 3px solid #9e9484;
+  background: var(--ms-bg-panel);
+  color: var(--ms-text-muted);
+  border-radius: 0 var(--ms-radius) var(--ms-radius) 0;
+  font-size: .82rem;
+}
+
+/* 在庫/售完 row badge（小） */
+.badge.bg-success { background-color: #3A9068 !important; }
+.badge.bg-secondary { background-color: #9e9484 !important; }
+
+/* ── 價格顏色 ─────────────────────────────────────────────── */
+.text-warning { color: var(--ms-meso) !important; }
+.text-info    { color: var(--ms-cs)   !important; }
+.text-success { color: var(--ms-ws)   !important; }
+
+/* ── Dropdown autocomplete ───────────────────────────────── */
+.dropdown-menu {
+  border-color: var(--ms-border);
+  border-radius: var(--ms-radius);
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+.dropdown-item { font-size: .82rem; color: var(--ms-text-primary); }
+.dropdown-item:hover { background: var(--ms-blue-light); }
+
+/* ── 空白提示 ─────────────────────────────────────────────── */
+.ms-empty-hint {
+  border: 2px dashed var(--ms-border);
+  border-radius: var(--ms-radius);
+  background: var(--ms-bg-card);
+  color: var(--ms-text-muted);
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+.ms-footer {
+  background-color: var(--ms-bg-panel);
+  border-top: 1px solid var(--ms-border);
+  color: var(--ms-text-muted);
+  font-size: .78rem;
+}
+
+/* ── Item icon ───────────────────────────────────────────── */
+.item-icon {
+  object-fit: contain;
+  border-radius: 4px;
+  background: var(--ms-bg-panel);
+  padding: 2px;
+}
+
+/* ── Trade fallback ──────────────────────────────────────── */
+.trade-fallback {
+  font-family: monospace;
+  font-size: .78rem;
+}
+
+/* ── Layout helpers ──────────────────────────────────────── */
 .flash-banner {
   position: sticky;
   top: 56px;
   z-index: 1020;
-}
-
-/* --- Trade-code fallback input --- */
-.trade-fallback {
-  font-family: monospace;
-  font-size: 0.78rem;
 }

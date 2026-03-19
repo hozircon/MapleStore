@@ -3,6 +3,7 @@ package com.msshop.config;
 import com.msshop.domain.GameItem;
 import com.msshop.repository.GameItemRepository;
 import com.msshop.service.WzStringParserService;
+import com.msshop.service.WzStringParserService.EqpItem;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +76,10 @@ public class GameItemInitializer implements ApplicationRunner {
             return;
         }
 
+        // Pre-load xlsx sub-category mappings (itemId → subCategory)
+        Map<Integer, String> consumeSubCat = loadXlsxSubCat(basePath, "消耗分類.xlsx");
+        Map<Integer, String> etcSubCat     = loadXlsxSubCat(basePath, "其他分類.xlsx");
+
         int total = 0;
         for (Map.Entry<String, String> entry : XML_FILES.entrySet()) {
             String filename   = entry.getKey();
@@ -87,14 +92,29 @@ public class GameItemInitializer implements ApplicationRunner {
             }
 
             try {
-                Map<Integer, String> parsed = parser.parseFile(xmlFile, wzCategory);
                 int count = 0;
-                for (Map.Entry<Integer, String> item : parsed.entrySet()) {
-                    em.persist(new GameItem(item.getKey(), item.getValue(), wzCategory));
-                    count++;
-                    if (count % BATCH_SIZE == 0) {
-                        em.flush();
-                        em.clear();
+                if ("Eqp.img.xml".equals(filename)) {
+                    // Use specialised parser that also derives equip type/sub-type
+                    Map<Integer, EqpItem> parsed = parser.parseEqpFile(xmlFile);
+                    for (EqpItem eqp : parsed.values()) {
+                        em.persist(new GameItem(eqp.itemId(), eqp.name(), wzCategory,
+                                                eqp.equipType(), eqp.equipSubType()));
+                        count++;
+                        if (count % BATCH_SIZE == 0) { em.flush(); em.clear(); }
+                    }
+                } else {
+                    Map<Integer, String> subCatMap = "Consume.img.xml".equals(filename) ? consumeSubCat
+                                                   : "Etc.img.xml".equals(filename)     ? etcSubCat
+                                                   : Map.of();
+                    Map<Integer, String> parsed = parser.parseFile(xmlFile, wzCategory);
+                    for (Map.Entry<Integer, String> item : parsed.entrySet()) {
+                        String subCat = subCatMap.get(item.getKey());
+                        GameItem gi = subCat != null
+                            ? new GameItem(item.getKey(), item.getValue(), wzCategory, subCat, true)
+                            : new GameItem(item.getKey(), item.getValue(), wzCategory);
+                        em.persist(gi);
+                        count++;
+                        if (count % BATCH_SIZE == 0) { em.flush(); em.clear(); }
                     }
                 }
                 em.flush();
@@ -107,5 +127,21 @@ public class GameItemInitializer implements ApplicationRunner {
         }
 
         log.info("[WZ] GameItem catalog ready: {} items total.", total);
+    }
+
+    private Map<Integer, String> loadXlsxSubCat(Path basePath, String filename) {
+        Path xlsxFile = basePath.resolve(filename);
+        if (!Files.exists(xlsxFile)) {
+            log.warn("[WZ] Sub-category file {} not found, skipping.", filename);
+            return Map.of();
+        }
+        try {
+            Map<Integer, String> map = parser.parseXlsxSubCategories(xlsxFile);
+            log.info("[WZ] {} → {} sub-category mappings loaded.", filename, map.size());
+            return map;
+        } catch (Exception e) {
+            log.error("[WZ] Failed to parse {}: {}", filename, e.getMessage(), e);
+            return Map.of();
+        }
     }
 }

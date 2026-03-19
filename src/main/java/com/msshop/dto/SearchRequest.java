@@ -14,6 +14,8 @@ public class SearchRequest {
     private String keyword;
     private String category;
     private String subCategory;
+    private String equipType;      // 防具 / 武器 / 其他
+    private String equipSubType;   // 頭盔 / 單手劍 …
     private List<String> priceTypes;
 
     // Equipment stat threshold filters (null = no minimum)

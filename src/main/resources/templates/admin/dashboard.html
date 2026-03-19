@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('管理後台')}"></head>
-<body class="bg-light">
+<body>
 
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
@@ -21,10 +21,10 @@
   <!-- Summary -->
   <div class="row g-2 mb-3">
     <div class="col-auto">
-      <span class="badge bg-success fs-6">在庫 <span th:text="${inStockCount}"></span> 筆</span>
+      <span class="ms-badge-instock">在庫 <span th:text="${inStockCount}"></span> 筆</span>
     </div>
     <div class="col-auto">
-      <span class="badge bg-secondary fs-6">售完 <span th:text="${soldOutCount}"></span> 筆</span>
+      <span class="ms-badge-soldout">售完 <span th:text="${soldOutCount}"></span> 筆</span>
     </div>
     <div class="col-auto" th:if="${soldOutCount > 0}">
       <form th:action="@{/admin/items/soldout/delete}" method="post"
@@ -36,8 +36,8 @@
 
   <!-- Item table -->
   <div class="table-responsive">
-    <table class="table table-sm table-hover table-bordered bg-white shadow-sm align-middle">
-      <thead class="table-dark">
+    <table class="table table-sm table-hover table-bordered ms-table align-middle">
+      <thead>
         <tr>
           <th>ID</th>
           <th>圖示</th>
@@ -47,6 +47,7 @@
           <th>標價</th>
           <th>數量</th>
           <th>賣家</th>
+          <th>倉庫角色</th>
           <th>位置</th>
           <th>狀態</th>
           <th>操作</th>
@@ -62,14 +63,15 @@
                  width="32" height="32" style="image-rendering:pixelated;" />
           </td>
           <td class="small fw-semibold" th:text="${item.name}"></td>
-          <td class="small" th:text="${item.category}"></td>
+          <td class="small" th:text="${item.category.label}"></td>
           <td class="small"
               th:classappend="${item.priceType.name() == 'MESO' ? 'text-warning fw-bold' :
                                (item.priceType.name() == 'CS'   ? 'text-info fw-bold'   : 'text-success fw-bold')}"
-              th:text="${item.priceType}"></td>
+              th:text="${item.priceType.label}"></td>
           <td class="small" th:text="${#numbers.formatInteger(item.priceValue,0,'COMMA')}"></td>
           <td class="small" th:text="${item.quantity}"></td>
           <td class="small" th:text="${item.sellerName}"></td>
+          <td class="small text-muted" th:text="${item.warehouseChar != null ? item.warehouseChar : '-'}"></td>
           <td class="small text-muted" th:text="${item.location}"></td>
           <td>
             <span th:if="${item.status.name() == 'IN_STOCK'}"  class="badge bg-success">在庫</span>
@@ -87,7 +89,7 @@
           </td>
         </tr>
         <tr th:if="${#lists.isEmpty(items)}">
-          <td colspan="11" class="text-center text-muted py-3">尚無商品資料</td>
+          <td colspan="12" class="text-center text-muted py-3">尚無商品資料</td>
         </tr>
       </tbody>
     </table>

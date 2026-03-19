@@ -7,13 +7,13 @@
 
 ## 一、改動總覽
 
-| # | 項目 | 影響範圍 | 難度 |
-|---|---|---|---|
-| A | 分類選單中文化 | 前端 + enum | 低 |
-| B | 消耗/其他子分類修正 | 前端 + SQL | 中 |
-| C | 裝備新增「種類 + 子分類」篩選 | entity / SearchRequest / SearchService / 前端 | 中高 |
-| D | 資料表分拆（4 分表） | 架構大改 | 高 |
-| E | GameItem 目錄加裝備分類欄位 | WZ 解析器 + entity | 中 |
+| # | 項目 | 影響範圍 | 難度 | 狀態 |
+|---|---|---|---|---|
+| A | 分類選單中文化 | 前端 + enum | 低 | ✅ 完成 |
+| B | 消耗/其他子分類修正 | 前端 + SQL | 中 | ✅ 完成 |
+| C | 裝備新增「種類 + 子分類」篩選 | entity / SearchRequest / SearchService / 前端 | 中高 | ✅ 完成 |
+| D | 資料表分拆（4 分表） | 架構大改 | 高 | ⏸ 延後 |
+| E | GameItem 目錄加裝備分類欄位 | WZ 解析器 + entity | 中 | ✅ 完成 |
 
 ---
 
@@ -342,10 +342,50 @@ Phase 3（高風險，架構大改，確認需求後再做）
 
 ## 四、待確認事項
 
-| # | 問題 | 影響 |
-|---|---|---|
-| 1 | 子分類儲存值是否統一中文？（卷軸、礦石 vs scroll, ore） | B 項、SearchService JPQL |
-| 2 | `套服（Longcoat）` vs `上衣（Coat）` 是否分開子分類？ | C/E 項 |
-| 3 | `Cap（頭盔）` 和一般帽子（Face）是否合併為「頭盔」？ | C/E 項 |
-| 4 | 分表（D 項）是否納入本版本？或下個 Sprint？ | 架構決策 |
-| 5 | 武器子分類 itemId 前碼范圍是否正確？需對照完整 xlsx | E 項 |
+| # | 問題 | 影響 | 結果 |
+|---|---|---|---|
+| 1 | 子分類儲存值是否統一中文？（卷軸、礦石 vs scroll, ore） | B 項、SearchService JPQL | ✅ 統一使用中文 |
+| 2 | `套服（Longcoat）` vs `上衣（Coat）` 是否分開子分類？ | C/E 項 | ✅ 分開：套服 / 上衣 |
+| 3 | `Cap（頭盔）` 和一般帽子（Face）是否合併為「頭盔」？ | C/E 項 | ✅ 分開：Cap→頭盔, Face→帽子 |
+| 4 | 分表（D 項）是否納入本版本？或下個 Sprint？ | 架構決策 | ⏸ 延後至下個 Sprint |
+| 5 | 武器子分類 itemId 前碼范圍是否正確？需對照完整 xlsx | E 項 | ✅ 已對照 武器分類.xlsx 確認 |
+
+---
+
+## 五、執行紀錄
+
+**執行日期**：2026-03-19  
+**最終建構狀態**：`compileJava BUILD SUCCESSFUL`
+
+### 5.1 各 Phase 實際完成情形
+
+| Phase | 計畫內容 | 實際異動 | 備註 |
+|---|---|---|---|
+| A | Category enum 加中文 label | ✅ `Category.java` 加 `label` 欄位，所有模板改顯示 `${cat.label}` | — |
+| B | 消耗/其他子分類修正 | ✅ `index.html` 動態 select，CONSUMABLE：藥水/卷軸/技能書/箭矢/飛鏢/其他；OTHER：礦石/素材 | 子分類來源改為 xlsx，見 5.2 |
+| C | 裝備種類+子分類篩選 | ✅ `Item.java` 新增 `equip_type`/`equip_sub_type`；`SearchRequest`/`SearchService` 加篩選；`index.html` 前端動態 select | — |
+| D | 資料表分拆（4 分表） | ⏸ 未執行，延後評估 | 現有單表結構已滿足本版本需求 |
+| E | GameItem 加裝備分類 | ✅ `GameItem.java` 新增 `sub_category`；`WzStringParserService` 加 `parseXlsxSubCategories()`；`GameItemInitializer` 整合 xlsx | 見 5.2 |
+
+### 5.2 計畫外實作項目
+
+#### xlsx 子分類整合（B + E 擴充）
+- `WzStringParserService.java` 新增 `parseXlsxSubCategories(Path xlsxFile)`：不依賴 Apache POI，以 JSP SAX 解析 xlsx zip 結構，讀取 B 欄（itemId）與 E 欄（subCategory）
+- `GameItemInitializer.java` 在 xml 解析前預先載入 `消耗分類.xlsx` 與 `其他分類.xlsx`，建立 itemId → subCategory 快取 Map
+- `GameItem.java` 新增 `sub_category` 欄位（VARCHAR 30），消耗/其他類道具於匯入時自動填入
+
+#### warehouseChar 欄位（新增，計畫外）
+後台營運需求：記錄物品實際存放於哪個遊戲角色的倉庫。
+- `Item.java`：新增 `warehouse_char` 欄位（`@Column(length=30, nullable=true)`）
+- `AdminItemRequest.java`：新增 `@Size(max=30) warehouseChar`（選填）
+- `ItemDto.java`：新增 `warehouseChar` 欄位並加入 mapping
+- `ItemService.java`：`buildItem()` 寫入 `item.setWarehouseChar(req.getWarehouseChar())`
+- `admin/item-form.html`：sellerName 之後新增「倉庫角色」文字輸入欄（可空）
+- `admin/dashboard.html`：表格新增「倉庫角色」欄，`colspan` 由 11 改為 12
+
+#### .gitignore 建立
+原專案無 `.gitignore`，本版本新增：
+- 排除 `resource/Character_0.wz/` 與 `resource/Item.wz/`（全為 PNG 圖片）
+- 排除 `resource/String.wz.zip`（備份壓縮包）
+- 排除 `resource/String.wz/~$*.xlsx`（Excel 暫存鎖定檔）
+- 排除 10 個程式碼未使用的 xml（EULA / Map / Mob / MonsterBook / NameChange / Npc / PetDialog / Skill / ToolTipHelp / TransferWorld）

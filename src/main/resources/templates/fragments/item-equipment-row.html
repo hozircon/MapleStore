@@ -4,75 +4,80 @@
 
 <!--
   Fragment: equipmentRow(item)
-  Usage:
-    <div th:replace="~{fragments/item-equipment-row :: equipmentRow(${item})}"></div>
+  Usage (inside a <tbody>):
+    <tr th:replace="~{fragments/item-equipment-row :: equipmentRow(${item})}"></tr>
 -->
-<div th:fragment="equipmentRow(item)"
-     class="card mb-2 shadow-sm equipment-row">
-  <div class="card-body py-2 px-3">
-    <div class="row align-items-center g-2">
+<tr th:fragment="equipmentRow(item)"
+    th:data-name="${item.name}"
+    th:data-str="${item.strBonusOrZero}"
+    th:data-dex="${item.dexBonusOrZero}"
+    th:data-int="${item.intBonusOrZero}"
+    th:data-luk="${item.lukBonusOrZero}"
+    th:data-atk="${item.atkBonusOrZero}"
+    th:data-matk="${item.matkBonusOrZero}"
+    th:data-slots="${item.scrollSlotsRemainingOrZero}"
+    th:data-price-group="${item.priceType.name() == 'MESO' ? 1 : (item.priceType.name() == 'CS' ? 2 : 3)}"
+    th:data-price-val="${item.priceValue}">
 
-      <!-- Item icon -->
-      <div class="col-auto">
-        <img th:src="@{/images/items/{id}.png(id=${item.itemId})}"
-             th:alt="${item.name}"
-             onerror="this.onerror=null;this.src='/images/items/0.png'"
-             width="40" height="40"
-             class="item-icon" />
-      </div>
+  <!-- Icon + Name -->
+  <td style="max-width:220px; padding-left:.75rem;">
+    <div class="d-flex align-items-center gap-2" style="min-width:0;">
+      <img th:src="@{/images/items/{id}.png(id=${item.itemId})}"
+           th:alt="${item.name}"
+           onerror="this.onerror=null;this.style.display='none'"
+           width="32" height="32"
+           style="image-rendering:pixelated;flex-shrink:0;" />
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.82rem;"
+            th:title="${item.name}"
+            th:text="${item.name}"></span>
+    </div>
+  </td>
 
-      <!-- Name -->
-      <div class="col-3 col-md-2 fw-semibold small" th:text="${item.name}">商品名稱</div>
+  <!-- Stats — each in its own column for grid alignment -->
+  <td class="small text-center" th:text="${item.strBonusOrZero}"></td>
+  <td class="small text-center" th:text="${item.dexBonusOrZero}"></td>
+  <td class="small text-center" th:text="${item.intBonusOrZero}"></td>
+  <td class="small text-center" th:text="${item.lukBonusOrZero}"></td>
+  <td class="small text-center fw-normal" th:text="${item.atkBonusOrZero}"></td>
+  <td class="small text-center" th:text="${item.matkBonusOrZero}"></td>
+  <td class="small text-center text-muted" th:text="${item.scrollSlotsRemainingOrZero}"></td>
 
-      <!-- Stats -->
-      <div class="col">
-        <div class="d-flex flex-wrap gap-1 stat-badges">
-          <span class="badge bg-danger"  th:text="'STR ' + ${item.strBonusOrZero}"></span>
-          <span class="badge bg-success" th:text="'DEX ' + ${item.dexBonusOrZero}"></span>
-          <span class="badge bg-primary" th:text="'INT ' + ${item.intBonusOrZero}"></span>
-          <span class="badge bg-warning text-dark" th:text="'LUK ' + ${item.lukBonusOrZero}"></span>
-          <span class="badge bg-dark"   th:text="'ATK ' + ${item.atkBonusOrZero}"></span>
-          <span class="badge bg-info text-dark"  th:text="'MATK ' + ${item.matkBonusOrZero}"></span>
-          <span class="badge bg-secondary" th:text="'卷' + ${item.scrollSlotsRemainingOrZero} + '孔'"></span>
-        </div>
-      </div>
+  <!-- Other stats (free text) -->
+  <td class="small text-muted fst-italic"
+      style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;"
+      th:title="${item.otherStats}"
+      th:text="${item.otherStats != null && !item.otherStats.isEmpty() ? item.otherStats : '-'}"></td>
 
-      <!-- Price -->
-      <div class="col-auto text-end">
-        <span class="price-badge fw-bold small"
-              th:classappend="${item.priceType.name() == 'MESO' ? 'text-warning' :
-                               (item.priceType.name() == 'CS'   ? 'text-info'   : 'text-success')}">
-          <span th:text="${item.priceType.name()}"></span>
-          <span th:text="${#numbers.formatInteger(item.priceValue, 0, 'COMMA')}"></span>
-        </span>
-      </div>
+  <!-- Price -->
+  <td class="small fw-bold"
+      th:classappend="${item.priceType.name() == 'MESO' ? 'text-warning' :
+                       (item.priceType.name() == 'CS'   ? 'text-info'   : 'text-success')}">
+    <span th:text="${item.priceType.label}"></span>
+    <span th:text="${#numbers.formatInteger(item.priceValue, 0, 'COMMA')}"></span>
+  </td>
 
-      <!-- Seller -->
-      <div class="col-auto text-muted small">
-        <span th:text="${item.sellerName}"></span>
-        &bull;
-        <span th:text="${item.location}"></span>
-      </div>
+  <!-- Seller · Location -->
+  <td class="small text-muted">
+    <span th:text="${item.sellerName}"></span>
+    <span class="mx-1">·</span>
+    <span th:text="${item.location}"></span>
+  </td>
 
-      <!-- Copy button + fallback input -->
-      <div class="col-auto">
-        <button type="button" class="btn btn-outline-secondary btn-sm copy-btn"
-                th:data-trade-code="${'【交易暗號】' + item.name + ' / ' +
-                                     #numbers.formatInteger(item.priceValue,0,'COMMA') + ' ' +
-                                     item.priceType.name() + ' / ' + item.location}">
-          複製暗號
-        </button>
-        <input type="text" class="form-control form-control-sm trade-fallback mt-1"
-               style="display:none; max-width:220px;"
-               readonly
-               th:value="${'【交易暗號】' + item.name + ' / ' +
-                           #numbers.formatInteger(item.priceValue,0,'COMMA') + ' ' +
-                           item.priceType.name() + ' / ' + item.location}" />
-      </div>
+  <!-- Copy button + fallback input -->
+  <td>
+    <button type="button" class="btn btn-outline-secondary btn-sm copy-btn"
+            th:data-trade-code="${'/em ' + item.sellerName + ' 你好，我要購買 ' + item.name + '，價格：' +
+                                 #numbers.formatInteger(item.priceValue,0,'COMMA') + ' ' + item.priceType.label + '。'}">
+      複製交易訊息
+    </button>
+    <input type="text" class="form-control form-control-sm trade-fallback mt-1"
+           style="display:none; max-width:220px;"
+           readonly
+           th:value="${'/em ' + item.sellerName + ' 你好，我要購買 ' + item.name + '，價格：' +
+                       #numbers.formatInteger(item.priceValue,0,'COMMA') + ' ' + item.priceType.label + '。'}" />
+  </td>
 
-    </div><!-- /row -->
-  </div>
-</div>
+</tr>
 
 </body>
 </html>
