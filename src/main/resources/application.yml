@@ -20,4 +20,7 @@ app:
   wz:
     string-path: ${user.dir}/resource/String.wz
     item-path: ${user.dir}/resource/Item.wz/Item.wz
-    char-path: ${user.dir}/resource/Character_0.wz
+    char-path: ${user.dir}/resource/Character.wz
+  admin:
+    username: ${ADMIN_USERNAME:horizon}
+    password: ${ADMIN_PASSWORD:MsHorizon}

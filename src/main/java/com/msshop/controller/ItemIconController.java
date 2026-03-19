@@ -41,6 +41,13 @@ public class ItemIconController {
                     "Glove", "Shield", "Weapon", "Accessory", "Ring",
                     "Face", "Hair", "PetEquip", "TamingMob", "Afterimage");
 
+    /**
+     * Categories whose items sit directly under the category folder
+     * (no same-name nested subfolder).
+     */
+    private static final java.util.Set<String> CHAR_NO_SUBDIR =
+            java.util.Set.of("Accessory");
+
     /** Caches resolved paths so repeated requests skip the disk scan. */
     private final ConcurrentHashMap<Integer, Path> pathCache = new ConcurrentHashMap<>();
     /** Sentinel value — means "not found, don't search again". */
@@ -95,11 +102,14 @@ public class ItemIconController {
             if (Files.exists(p)) return p;
         }
 
-        // ── Character_0.wz ────────────────────────────────────────────────────
-        // Structure: {SubCategory}/{SubCategory}/{padded}.img/{padded}.img/info.icon.png
+        // ── Character.wz ─────────────────────────────────────────────────────
+        // Most categories: {SubCategory}/{SubCategory}/{padded}.img/{padded}.img/info.icon.png
+        // Accessory (no nested subfolder): {SubCategory}/{padded}.img/{padded}.img/info.icon.png
         for (String subcat : CHAR_SUBCATEGORIES) {
-            Path p = charBase
-                    .resolve(subcat).resolve(subcat)
+            Path base = CHAR_NO_SUBDIR.contains(subcat)
+                    ? charBase.resolve(subcat)
+                    : charBase.resolve(subcat).resolve(subcat);
+            Path p = base
                     .resolve(padded + ".img").resolve(padded + ".img")
                     .resolve("info.icon.png");
             if (Files.exists(p)) return p;

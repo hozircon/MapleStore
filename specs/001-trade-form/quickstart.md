@@ -45,10 +45,13 @@ git checkout 001-trade-form
 
 **Windows PowerShell：**
 ```powershell
+chcp 65001
 .\gradlew.bat bootRun "--args=--spring.profiles.active=dev"
 ```
 
-> **Windows 注意事項**：必須使用 `.\gradlew.bat`（非 `./gradlew`），且 `--args` 的值需以雙引號包裹；單引號在 PowerShell 中語義不同，會導致 Gradle 解析失敗。
+> **Windows 注意事項**：
+> - 必須使用 `.\gradlew.bat`（非 `./gradlew`），且 `--args` 的值需以雙引號包裹；單引號在 PowerShell 中語義不同，會導致 Gradle 解析失敗。
+> - 執行前需先執行 `chcp 65001` 將終端機切換為 UTF-8，否則中文字會亂碼（Windows 預設字碼頁 950 為 Big5）。`build.gradle` 已設定 JVM 輸出使用 UTF-8，兩者需同時為 UTF-8 才能正常顯示。
 
 > **若出現「Port 8080 was already in use」**：代表上一次的 Java 程序尚未結束。在 PowerShell 執行以下指令清除後再重新啟動：
 > ```powershell

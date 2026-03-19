@@ -3,15 +3,16 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: jdbc:h2:mem:msshop;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
+    url: jdbc:h2:file:./data/msshopdev;AUTO_SERVER=TRUE;MODE=MySQL
     driver-class-name: org.h2.Driver
     username: sa
     password:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     defer-datasource-initialization: true
   sql:
     init:
       mode: always
+      encoding: UTF-8

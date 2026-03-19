@@ -30,6 +30,9 @@ Thumbs.db
 # Spring Boot
 HELP.md
 
+# H2 file-based dev database
+data/
+
 # Gradle wrapper jar — 留在版控
 !gradle/wrapper/gradle-wrapper.jar
 
@@ -38,10 +41,6 @@ HELP.md
 #  保留：程式實際讀取的 xml / xlsx
 #  排除：所有圖片目錄、zip 備份、未使用 xml、Excel 暫存鎖定檔
 # ══════════════════════════════════════════════════════════════
-
-# 圖片目錄（Character_0.wz 和 Item.wz 全是 PNG，完全排除）
-resource/Character_0.wz/
-resource/Item.wz/
 
 # String.wz zip 壓縮包（不需入版控）
 resource/String.wz.zip

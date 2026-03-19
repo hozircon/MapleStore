@@ -44,6 +44,22 @@ dependencies {
     testImplementation 'org.testcontainers:mysql'
 }
 
+bootRun {
+    jvmArgs = ['-Dfile.encoding=UTF-8', '-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8']
+}
+
+// Strip UTF-8 BOM (EF BB BF) from SQL files after resource copy.
+// This prevents H2 syntax errors when editors save SQL files with BOM.
+processResources.doLast {
+    fileTree("$buildDir/resources/main").matching { include '**/*.sql' }.each { f ->
+        def bytes = f.bytes
+        if (bytes.length >= 3 && bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) {
+            f.bytes = bytes[3..-1]
+            logger.lifecycle("Stripped UTF-8 BOM from ${f.name}")
+        }
+    }
+}
+
 test {
     useJUnitPlatform()
 }
