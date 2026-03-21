@@ -8,10 +8,14 @@ import com.msshop.dto.AdminItemRequest;
 import com.msshop.dto.ItemDto;
 import com.msshop.repository.ItemRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,6 +28,41 @@ public class ItemService {
     @Transactional(readOnly = true)
     public List<ItemDto> findAll() {
         return itemRepository.findAllByOrderByCreatedAtDesc()
+                .stream().map(ItemDto::from).toList();
+    }
+
+    /** Filtered items for admin dashboard, newest first. */
+    @Transactional(readOnly = true)
+    public List<ItemDto> findAllFiltered(String name, String category, String subCategory,
+                                         String priceType, String seller,
+                                         String warehouse, String location, String status) {
+        Specification<Item> spec = (root, q, cb) -> {
+            List<Predicate> p = new ArrayList<>();
+            if (name != null && !name.isBlank())
+                p.add(cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+            if (category != null && !category.isBlank()) {
+                try { p.add(cb.equal(root.get("category"), Category.valueOf(category))); }
+                catch (IllegalArgumentException ignored) {}
+            }
+            if (subCategory != null && !subCategory.isBlank())
+                p.add(cb.like(cb.lower(root.get("subCategory")), "%" + subCategory.toLowerCase() + "%"));
+            if (priceType != null && !priceType.isBlank()) {
+                try { p.add(cb.equal(root.get("priceType"), PriceType.valueOf(priceType))); }
+                catch (IllegalArgumentException ignored) {}
+            }
+            if (seller != null && !seller.isBlank())
+                p.add(cb.like(cb.lower(root.get("sellerName")), "%" + seller.toLowerCase() + "%"));
+            if (warehouse != null && !warehouse.isBlank())
+                p.add(cb.like(cb.lower(root.get("warehouseChar")), "%" + warehouse.toLowerCase() + "%"));
+            if (location != null && !location.isBlank())
+                p.add(cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+            if (status != null && !status.isBlank()) {
+                try { p.add(cb.equal(root.get("status"), ItemStatus.valueOf(status))); }
+                catch (IllegalArgumentException ignored) {}
+            }
+            return cb.and(p.toArray(new Predicate[0]));
+        };
+        return itemRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
                 .stream().map(ItemDto::from).toList();
     }
 
@@ -67,6 +106,14 @@ public class ItemService {
         return itemRepository.countByStatus(status);
     }
 
+    public List<String> findDistinctWarehouseChars() {
+        return itemRepository.findDistinctWarehouseChars();
+    }
+
+    public List<String> findDistinctSellerNames() {
+        return itemRepository.findDistinctSellerNames();
+    }
+
     // ---- helpers ----
 
     private Item buildItem(Item item, AdminItemRequest req) {
@@ -87,7 +134,8 @@ public class ItemService {
         item.setPriceType(PriceType.valueOf(req.getPriceType()));
         item.setPriceValue(req.getPriceValue());
         item.setQuantity(req.getQuantity());
-        item.setLocation(req.getLocation());
+        item.setLocation(req.getLocation() == null || req.getLocation().isBlank()
+                ? "請跟賣家聯絡" : req.getLocation());
         item.setSellerName(req.getSellerName());
         item.setWarehouseChar(req.getWarehouseChar());
         return item;

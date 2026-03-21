@@ -18,7 +18,7 @@
 </head>
 
 <nav th:fragment="navbar" class="navbar ms-navbar d-flex justify-content-between align-items-center">
-  <a class="navbar-brand" th:href="@{/}">楓葉交易站</a>
+  <a class="navbar-brand" th:href="@{/}">數柴ㄉ神秘谷道具資訊展示站</a>
   <div class="d-flex align-items-center gap-2">
     <a class="btn-nav-admin" th:href="@{/admin}">管理後台</a>
     <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()" class="m-0">
@@ -28,7 +28,7 @@
 </nav>
 
 <footer th:fragment="footer" class="text-center ms-footer py-3 mt-4">
-  &copy; 2026 楓葉交易站 &mdash; 非官方私服社群工具
+  &copy; 2026 神秘谷道具數位展示 &mdash; 
 </footer>
 
 <!--

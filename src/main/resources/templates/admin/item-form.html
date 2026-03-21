@@ -42,13 +42,18 @@
                 <span id="itemIconPlaceholder" style="font-size:1.4rem;color:#ced4da;">🖼️</span>
               </div>
             </div>
-            <div class="form-text text-muted">從清單中選擇道具，將自動填入 ID 與名稱</div>
+            <div class="form-text text-muted">從清單中選擇道具，將自動填入 ID 與名稱；也可直接在下方輸入道具 ID</div>
           </div>
 
-          <!-- Hidden itemId (auto-filled by autocomplete) -->
-          <input type="hidden" id="itemIdHidden" th:field="*{itemId}" />
-          <div th:if="${#fields.hasErrors('itemId')}" class="col-12">
-            <div class="alert alert-danger py-1 px-2 small" th:errors="*{itemId}"></div>
+          <!-- Visible itemId input (manually enterable, also auto-filled by autocomplete) -->
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">道具 ID
+              <span class="text-muted fw-normal">（可直接輸入 ID 帶出道具）</span>
+            </label>
+            <input type="number" id="itemIdInput" class="form-control form-control-sm"
+                   th:field="*{itemId}" th:errorclass="is-invalid"
+                   placeholder="例：1302000" min="1" />
+            <div class="invalid-feedback" th:errors="*{itemId}"></div>
           </div>
 
           <!-- Name (auto-filled, still editable) -->
@@ -179,7 +184,11 @@
           <div class="col-md-6">
             <label class="form-label small fw-semibold">賣家角色名稱 <span class="text-danger">*</span></label>
             <input type="text" class="form-control form-control-sm"
-                   th:field="*{sellerName}" th:errorclass="is-invalid" maxlength="50" />
+                   th:field="*{sellerName}" th:errorclass="is-invalid" maxlength="50"
+                   list="sellerNameList" autocomplete="off" />
+            <datalist id="sellerNameList">
+              <option th:each="n : ${characterNames}" th:value="${n}"></option>
+            </datalist>
             <div class="invalid-feedback" th:errors="*{sellerName}"></div>
           </div>
 
@@ -189,12 +198,18 @@
               <span class="text-muted fw-normal">(非必填，僅後台顯示)</span>
             </label>
             <input type="text" class="form-control form-control-sm"
-                   th:field="*{warehouseChar}" maxlength="30" placeholder="例：弓笭手01" />
+                   th:field="*{warehouseChar}" maxlength="30" placeholder="例：弓笭手01"
+                   list="warehouseCharList" autocomplete="off" />
+            <datalist id="warehouseCharList">
+              <option th:each="c : ${characterNames}" th:value="${c}"></option>
+            </datalist>
           </div>
 
           <!-- Location -->
           <div class="col-md-6">
-            <label class="form-label small fw-semibold">遊戲位置 <span class="text-danger">*</span></label>
+            <label class="form-label small fw-semibold">遊戲位置
+              <span class="text-muted fw-normal">（選填，空白則自動填入「請跟賣家聯絡」）</span>
+            </label>
             <input type="text" class="form-control form-control-sm"
                    th:field="*{location}" th:errorclass="is-invalid"
                    placeholder="例：CH1 FM03" maxlength="50" />
@@ -286,7 +301,7 @@
   /* ── Game-item autocomplete ──────────────────────────────────── */
   const searchInput  = document.getElementById('itemSearchInput');
   const dropdown     = document.getElementById('itemSearchDropdown');
-  const itemIdField  = document.getElementById('itemIdHidden');
+  const itemIdField  = document.getElementById('itemIdInput');
   const nameField    = document.getElementById('itemNameInput');
   const iconPreview  = document.getElementById('itemIconPreview');
   const iconPlaceholder = document.getElementById('itemIconPlaceholder');
@@ -390,6 +405,35 @@
   });
   searchInput.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeDropdown();
+  });
+
+  /* ── Lookup by item ID input ────────────────────────────────────── */
+  itemIdField.addEventListener('change', function () {
+    const id = this.value.trim();
+    if (!id) return;
+    fetch('/api/game-items/' + encodeURIComponent(id))
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(item) {
+        if (!item) return;
+        nameField.value   = item.name;
+        searchInput.value = item.name;
+        const WZ_CAT_MAP = {
+          'Eqp': 'EQUIPMENT', 'Consume': 'CONSUMABLE',
+          'Etc': 'OTHER', 'Cash': 'DECORATIVE', 'Ins': 'OTHER', 'Pet': 'OTHER'
+        };
+        const mappedCat = WZ_CAT_MAP[item.wzCategory] || '';
+        catSel.value = mappedCat;
+        syncFields(mappedCat);
+        if (item.equipType) {
+          const equipTypeSel = document.getElementById('adminEquipTypeSelect');
+          equipTypeSel.value = item.equipType;
+          fillEquipSubType(item.equipType, item.equipSubType || '');
+          if (item.equipSubType)
+            document.getElementById('adminEquipSubTypeSelect').value = item.equipSubType;
+        }
+        showItemIcon(item.itemId);
+      })
+      .catch(function() {});
   });
 })();
 </script>

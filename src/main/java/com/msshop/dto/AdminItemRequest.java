@@ -64,8 +64,7 @@ public class AdminItemRequest {
     @Min(value = 1, message = "數量至少為 1")
     private Integer quantity;
 
-    @NotBlank(message = "遊戲位置為必填")
-    @Size(min = 1, max = 50, message = "位置長度須為 1–50 字元")
+    @Size(max = 50, message = "位置長度不得超過 50 字元")
     private String location;
 
     @NotBlank(message = "賣家名稱為必填")

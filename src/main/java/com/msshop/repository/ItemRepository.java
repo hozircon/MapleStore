@@ -22,4 +22,10 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
     int deleteAllByStatus(ItemStatus status);
 
     int countByStatus(ItemStatus status);
+
+    @Query("SELECT DISTINCT i.warehouseChar FROM Item i WHERE i.warehouseChar IS NOT NULL AND i.warehouseChar <> '' ORDER BY i.warehouseChar")
+    List<String> findDistinctWarehouseChars();
+
+    @Query("SELECT DISTINCT i.sellerName FROM Item i WHERE i.sellerName IS NOT NULL AND i.sellerName <> '' ORDER BY i.sellerName")
+    List<String> findDistinctSellerNames();
 }

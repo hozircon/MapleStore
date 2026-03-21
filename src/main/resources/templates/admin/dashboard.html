@@ -34,6 +34,124 @@
     </div>
   </div>
 
+  <!-- Announcement management -->
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center py-2">
+      <span class="fw-semibold small">📣 公告訊息管理</span>
+    </div>
+    <div class="card-body py-2">
+      <form th:action="@{/admin/announcements}" method="post" class="d-flex gap-2 mb-2">
+        <input type="text" name="message" class="form-control form-control-sm"
+               placeholder="輸入公告內容，例：XX:00~XX:00 休息中" maxlength="500" required />
+        <button type="submit" class="btn btn-sm btn-primary text-nowrap">發布</button>
+      </form>
+      <div th:if="${#lists.isEmpty(announcements)}" class="text-muted small">目前無公告</div>
+      <div th:each="ann : ${announcements}" class="d-flex align-items-center justify-content-between gap-2 py-1 border-bottom">
+        <span class="small" th:text="${ann.message}"></span>
+        <div class="d-flex align-items-center gap-2 text-nowrap">
+          <span class="text-muted" style="font-size:.7rem;"
+                th:text="${#temporals.format(ann.createdAt,'MM/dd HH:mm')}"></span>
+          <form th:action="@{/admin/announcements/{id}/delete(id=${ann.id})}" method="post"
+                onsubmit="return confirm('確定刪除此公告？')">
+            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">✕</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Character preset management -->
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center py-2">
+      <span class="fw-semibold small">👤 角色名稱管理</span>
+      <span class="text-muted" style="font-size:.75rem;">賭家 / 倉庫角色預設名單</span>
+    </div>
+    <div class="card-body py-2">
+      <form th:action="@{/admin/characters}" method="post" class="d-flex gap-2 mb-2">
+        <input type="text" name="name" class="form-control form-control-sm"
+               placeholder="輸入角色名稱，例：楓葉战士" maxlength="30" required />
+        <button type="submit" class="btn btn-sm btn-success text-nowrap">新增</button>
+      </form>
+      <div th:if="${#lists.isEmpty(characterPresets)}" class="text-muted small">尚無預設角色</div>
+      <div class="d-flex flex-wrap gap-2 mt-1">
+        <div th:each="ch : ${characterPresets}"
+             class="d-flex align-items-center gap-1 badge rounded-pill bg-light text-dark border" style="font-size:.8rem;">
+          <span th:text="${ch.name}"></span>
+          <form th:action="@{/admin/characters/{id}/delete(id=${ch.id})}" method="post"
+                onsubmit="return confirm('確定刪除「' + /*[[${ch.name}]]*/ '' + '」？')" style="display:inline;">
+            <button type="submit" class="btn-close" style="font-size:.6rem;" aria-label="remove"></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter form -->
+  <div class="card mb-3">
+    <div class="card-header py-2">
+      <span class="fw-semibold small">🔍 筛選</span>
+    </div>
+    <div class="card-body py-2">
+      <form method="get" th:action="@{/admin}" class="row g-2 align-items-end">
+        <div class="col-md-2">
+          <label class="form-label small mb-1">名稱</label>
+          <input type="text" name="filterName" class="form-control form-control-sm"
+                 th:value="${filterName}" placeholder="道具名稱" />
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small mb-1">大類</label>
+          <select name="filterCategory" class="form-select form-select-sm">
+            <option value="">全部</option>
+            <option th:each="cat : ${categories}" th:value="${cat.name()}"
+                    th:text="${cat.label}"
+                    th:selected="${cat.name() == filterCategory}"></option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small mb-1">子類</label>
+          <input type="text" name="filterSubCategory" class="form-control form-control-sm"
+                 th:value="${filterSubCategory}" placeholder="子類別" />
+        </div>
+        <div class="col-md-1">
+          <label class="form-label small mb-1">貨幣</label>
+          <select name="filterPriceType" class="form-select form-select-sm">
+            <option value="">全部</option>
+            <option th:each="pt : ${priceTypes}" th:value="${pt.name()}"
+                    th:text="${pt.label}"
+                    th:selected="${pt.name() == filterPriceType}"></option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small mb-1">賣家</label>
+          <input type="text" name="filterSeller" class="form-control form-control-sm"
+                 th:value="${filterSeller}" placeholder="賣家名稱" />
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small mb-1">倉庫角色</label>
+          <input type="text" name="filterWarehouse" class="form-control form-control-sm"
+                 th:value="${filterWarehouse}" placeholder="倉庫角色" />
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small mb-1">位置</label>
+          <input type="text" name="filterLocation" class="form-control form-control-sm"
+                 th:value="${filterLocation}" placeholder="遊戲位置" />
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small mb-1">狀態</label>
+          <select name="filterStatus" class="form-select form-select-sm">
+            <option value="">全部</option>
+            <option value="IN_STOCK"  th:selected="${filterStatus == 'IN_STOCK'}">在庫</option>
+            <option value="SOLD_OUT" th:selected="${filterStatus == 'SOLD_OUT'}">售完</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-sm btn-primary">選詢</button>
+          <a th:href="@{/admin}" class="btn btn-sm btn-outline-secondary ms-1">清除</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Item table -->
   <div class="table-responsive">
     <table class="table table-sm table-hover table-bordered ms-table align-middle">
@@ -43,6 +161,8 @@
           <th>圖示</th>
           <th>名稱</th>
           <th>大類</th>
+          <th>子類別</th>
+          <th>細分類</th>
           <th>貨幣</th>
           <th>標價</th>
           <th>數量</th>
@@ -64,6 +184,10 @@
           </td>
           <td class="small fw-semibold" th:text="${item.name}"></td>
           <td class="small" th:text="${item.category.label}"></td>
+          <td class="small text-muted"
+              th:text="${item.category.name() == 'EQUIPMENT' ? (item.equipType != null ? item.equipType : '-') : (item.subCategory != null ? item.subCategory : '-')}"></td>
+          <td class="small text-muted"
+              th:text="${item.category.name() == 'EQUIPMENT' ? (item.equipSubType != null ? item.equipSubType : '-') : '-'}"></td>
           <td class="small"
               th:classappend="${item.priceType.name() == 'MESO' ? 'text-warning fw-bold' :
                                (item.priceType.name() == 'CS'   ? 'text-info fw-bold'   : 'text-success fw-bold')}"
@@ -89,7 +213,7 @@
           </td>
         </tr>
         <tr th:if="${#lists.isEmpty(items)}">
-          <td colspan="12" class="text-center text-muted py-3">尚無商品資料</td>
+          <td colspan="14" class="text-center text-muted py-3">尚無商品資料</td>
         </tr>
       </tbody>
     </table>

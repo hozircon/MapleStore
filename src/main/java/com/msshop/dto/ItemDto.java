@@ -18,6 +18,8 @@ public class ItemDto {
     private String name;
     private Category category;
     private String subCategory;
+    private String equipType;
+    private String equipSubType;
     private Integer strBonus;
     private Integer dexBonus;
     private Integer intBonus;
@@ -41,6 +43,8 @@ public class ItemDto {
         dto.name                  = item.getName();
         dto.category              = item.getCategory();
         dto.subCategory           = item.getSubCategory();
+        dto.equipType             = item.getEquipType();
+        dto.equipSubType          = item.getEquipSubType();
         dto.strBonus              = item.getStrBonus();
         dto.dexBonus              = item.getDexBonus();
         dto.intBonus              = item.getIntBonus();

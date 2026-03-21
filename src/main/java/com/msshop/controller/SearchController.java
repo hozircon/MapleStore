@@ -3,6 +3,7 @@ package com.msshop.controller;
 import com.msshop.domain.Category;
 import com.msshop.dto.ItemDto;
 import com.msshop.dto.SearchRequest;
+import com.msshop.service.AnnouncementService;
 import com.msshop.service.SearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -17,6 +18,7 @@ import java.util.List;
 public class SearchController {
 
     private final SearchService searchService;
+    private final AnnouncementService announcementService;
 
     @GetMapping("/")
     public String search(@ModelAttribute SearchRequest searchRequest, Model model) {
@@ -39,6 +41,7 @@ public class SearchController {
         model.addAttribute("hasResults",    !items.isEmpty());
         model.addAttribute("searched",      hasQuery);
         model.addAttribute("categories",    Category.values());
+        model.addAttribute("announcement",  announcementService.findLatest());
 
         return "index";
     }
