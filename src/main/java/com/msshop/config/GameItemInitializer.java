@@ -77,8 +77,8 @@ public class GameItemInitializer implements ApplicationRunner {
         }
 
         // Pre-load xlsx sub-category mappings (itemId → subCategory)
-        Map<Integer, String> consumeSubCat = loadXlsxSubCat(basePath, "消耗分類.xlsx");
-        Map<Integer, String> etcSubCat     = loadXlsxSubCat(basePath, "其他分類.xlsx");
+        Map<Integer, String> consumeSubCat = loadXlsxSubCat(basePath, "consume-subcat.xlsx");
+        Map<Integer, String> etcSubCat     = loadXlsxSubCat(basePath, "etc-subcat.xlsx");
 
         int total = 0;
         for (Map.Entry<String, String> entry : XML_FILES.entrySet()) {
